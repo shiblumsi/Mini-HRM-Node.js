@@ -12,3 +12,587 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+model Admin {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String
+}
+
+enum userRole {
+  EMPLOYEE
+  HR
+}
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String
+  role          userRole  @default(EMPLOYEE)
+  passwordResetToken  String?
+  passwordResetExpires DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  employee      Employee[]
+  hr            Hr[]
+}
+
+model Hr {
+  id            Int          @id @default(autoincrement())
+  user          User         @relation(fields: [userId], references: [id])
+  userId        Int
+  email         String       @unique
+  firstName     String
+  lastName      String
+  contact       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  Interview     Interview[]
+  report        Report[]
+}
+
+model Department {
+  id            Int          @id @default(autoincrement())
+  name          String       @unique
+  description   String?
+  employees     Employee[]   // Relation with Employee
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  jobPosition   JobPosition[]
+  dashboardMetrics  DashboardMetrics[]
+}
+
+model Designation {
+  id            Int          @id @default(autoincrement())
+  title         String       @unique
+  employees     Employee[]   // Relation with Employee
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  onboarding    Onboarding[]
+}
+
+
+enum EmpStatus {
+  ACTIVE
+  RESIGNED
+  IN_ACTIVE
+}
+model Employee {
+  id            Int          @id @default(autoincrement())
+  user          User         @relation(fields: [userId], references: [id])
+  userId        Int
+  email         String       @unique
+  firstName     String
+  lastName      String
+  contact       String
+  hireDate      DateTime
+  dob           DateTime
+  address       String
+  status        EmpStatus     @default(ACTIVE)
+  prevCompany   String?
+  imageUrl      String
+  department    Department?   @relation(fields: [departmentId], references: [id])
+  departmentId  Int?
+  designation   Designation?  @relation(fields: [designationId], references: [id])
+  designationId Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  attendance    Attendance[]
+  leaves        Leave[]
+  salaryStructure SalaryStructure[]
+  payroll       Payroll[]
+  task          Task[]
+  performance   Performance[]
+  onboarding    Onboarding[]
+  attendanceReport  AttendanceReport[]
+  payrollReport PayrollReport[]
+  leaveReport   LeaveReport[]
+  performanceReport PerformanceReport[]
+  notification  Notification[]
+  alert         Alert[]
+  document      Document[]
+  documentLog   DocumentLog[]
+}
+
+model Attendance {
+  id             Int          @id @default(autoincrement())   // Unique identifier for each attendance record
+  employee       Employee     @relation(fields: [employeeId], references: [id]) // Relationship to the Employee model
+  employeeId     Int          // Foreign key referencing the Employee's ID
+  checkIn        DateTime     // Timestamp for when the employee clocks in
+  checkOut       DateTime?    // Timestamp for when the employee clocks out (optional)
+  overtime       Float?       // Number of overtime hours worked (optional)
+  lateArrival    Boolean      @default(false) // Indicates if the employee arrived late
+  createdAt      DateTime     @default(now()) // Record creation timestamp
+  updatedAt      DateTime     @updatedAt
+}
+
+
+enum leaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+model Leave {
+  id               Int          @id @default(autoincrement())
+  employee         Employee     @relation(fields: [employeeId], references: [id])
+  employeeId       Int
+  type             LeaveType    @relation(fields: [leaveTypeId], references: [id])
+  leaveTypeId      Int
+  startDate        DateTime
+  endDate          DateTime
+  totalDays        Int
+  status           leaveStatus  @default(PENDING)    // pending, approved, rejected
+  approvedBy       String?
+  approvalDate     DateTime?
+  cancellationDate DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model LeaveType {
+  id              Int           @id @default(autoincrement())
+  name            String        @unique
+  maxDays         Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  leaves          Leave[]
+  leaveReport     LeaveReport[]
+}
+
+
+model SalaryStructure {
+  id           Int         @id @default(autoincrement())
+  employee     Employee    @relation(fields: [employeeId], references: [id])
+  employeeId   Int
+  basicSalary  Float
+  houseAllowance Float?
+  medicalAllowance Float?
+  otherAllowance  Float?
+  overtimeRate  Float?
+  deductions   Float?      // Any deductions like tax, provident fund
+  grossSalary  Float       // Calculated as basicSalary + allowances - deductions
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  payroll      Payroll[]
+}
+
+model Payroll {
+  id            Int         @id @default(autoincrement())
+  employee      Employee    @relation(fields: [employeeId], references: [id])
+  employeeId    Int
+  month         String      // E.g., 'September 2024'
+  salaryStructure SalaryStructure @relation(fields: [salaryStructureId], references: [id])
+  salaryStructureId Int
+  status        PayrollStatus  @default(PENDING) // Enum to track payroll status
+  totalPayable  Float         // Total amount payable for that month
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  PayrollTransaction PayrollTransaction[]
+}
+
+model PayrollTransaction {
+  id          Int         @id @default(autoincrement())
+  payroll     Payroll     @relation(fields: [payrollId], references: [id])
+  payrollId   Int
+  transactionDate DateTime
+  amount      Float
+  paymentMethod String     // E.g., 'Bank Transfer', 'Cash', etc.
+  transactionStatus TransactionStatus @default(PENDING) // Enum for transaction status
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum PayrollStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+
+
+model Task {
+  id           Int          @id @default(autoincrement())
+  title        String
+  description  String?
+  employee      Employee      @relation(fields: [employeeId], references: [id])
+  employeeId   Int
+  status       TaskStatus    @default(PENDING) // Enum to track task status
+  priority     TaskPriority  @default(MEDIUM)  // Enum for task priority
+  dueDate      DateTime
+  completedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  performance   Performance[]
+}
+
+model Performance {
+  id           Int          @id @default(autoincrement())
+  employee     Employee      @relation(fields: [employeeId], references: [id])
+  employeeId   Int
+  task         Task          @relation(fields: [taskId], references: [id])
+  taskId       Int
+  review       String?       // Optional performance review
+  rating       Int?          // Rating, could be a scale of 1-5 or 1-10
+  comments      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+
+
+model JobPosition {
+  id              Int              @id @default(autoincrement())
+  title           String
+  description     String?
+  requirements    String?           // Job requirements or qualifications
+  department      Department        @relation(fields: [departmentId], references: [id])
+  departmentId    Int
+  location        String?
+  employmentType  EmploymentType    // Full-time, Part-time, Contract, etc.
+  status          JobStatus         @default(OPEN)  // Enum to track if the job is open, closed, etc.
+  salaryRange     String?           // Salary range for the position
+  applicationDeadline DateTime?     // Job application deadline
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  applications    JobApplication[]  // Relation with job applications
+}
+
+model JobApplication {
+  id              Int              @id @default(autoincrement())
+  applicantName   String
+  applicantEmail  String
+  resume          String?           // File path or link to resume
+  coverLetter     String?
+  jobPosition     JobPosition       @relation(fields: [jobPositionId], references: [id])
+  jobPositionId   Int
+  status          ApplicationStatus @default(PENDING) // Enum to track application status
+  isShortlisted   Boolean           @default(false)   // To track if the candidate is shortlisted
+  appliedAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  interviews      Interview[]       // Relation with interviews
+  onboarding      Onboarding[]
+}
+
+model Interview {
+  id              Int              @id @default(autoincrement())
+  jobApplication  JobApplication   @relation(fields: [jobApplicationId], references: [id])
+  jobApplicationId Int
+  interviewer     Hr         @relation(fields: [hrId], references: [id])
+  hrId   Int
+  date            DateTime
+  feedback        String?
+  result          InterviewResult? // Enum for interview result (PASSED, FAILED, etc.)
+  status          InterviewStatus  @default(SCHEDULED)  // Enum to track interview status
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Onboarding {
+  id              Int              @id @default(autoincrement())
+  employee        Employee         @relation(fields: [employeeId], references: [id])
+  employeeId      Int
+  jobApplication  JobApplication   @relation(fields: [jobApplicationId], references: [id])
+  jobApplicationId Int
+  designation     Designation      @relation(fields: [designationId], references: [id])
+  designationId   Int
+  onboardingDate  DateTime         @default(now())
+  completed       Boolean          @default(false)   // Track if onboarding is completed
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  TEMPORARY
+  INTERN
+}
+
+enum JobStatus {
+  OPEN
+  CLOSED
+  ON_HOLD
+}
+
+enum ApplicationStatus {
+  PENDING
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
+  REJECTED
+  OFFERED
+  HIRED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+}
+
+enum InterviewResult {
+  PASSED
+  FAILED
+  ON_HOLD
+}
+
+
+
+model Report {
+  id             Int             @id @default(autoincrement())
+  reportType     ReportType      // Enum for type of report (attendance, payroll, leave, performance)
+  generatedBy    Hr             @relation(fields: [hrId], references: [id])
+  hrId  Int
+  filters        Json?           // Stores customizable filters like department, employee, date range, etc.
+  generatedAt    DateTime        @default(now())
+  result         Json            // Stores the actual data/results of the report
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model DashboardMetrics {
+  id             Int             @id @default(autoincrement())
+  metricType     MetricType      // Enum for different HR metrics (e.g., employee count, payroll summary, leave status)
+  value          Float           // Stores the aggregated metric value (e.g., total employee count, payroll total)
+  department     Department?     @relation(fields: [departmentId], references: [id])
+  departmentId   Int?
+  period         String?         // Time period for the metric (e.g., "September 2024")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model AttendanceReport {
+  id             Int             @id @default(autoincrement())
+  employee       Employee        @relation(fields: [employeeId], references: [id])
+  employeeId     Int
+  attendanceDays Int             // Total number of days attended within the reporting period
+  absentDays     Int             // Total number of days absent
+  lateDays       Int             // Total number of late days
+  month          String          // attendance report month
+  year           Int             // attendance report year
+  generatedAt    DateTime        @default(now())
+}
+
+model PayrollReport {
+  id             Int             @id @default(autoincrement())
+  employee       Employee        @relation(fields: [employeeId], references: [id])
+  employeeId     Int
+  totalPayable   Float           // Total amount payable within the reporting period
+  month          String          // Payroll report month
+  year           Int             // Payroll report year
+  status         PayrollStatus   @default(PAID)
+  generatedAt    DateTime        @default(now())
+}
+
+model LeaveReport {
+  id             Int             @id @default(autoincrement())
+  employee       Employee        @relation(fields: [employeeId], references: [id])
+  employeeId     Int
+  totalLeaveDays Int             // Total number of leave days within the reporting period
+  leaveType      LeaveType       @relation(fields: [leaveTypeId], references: [id])
+  leaveTypeId    Int
+  status         LeaveStatus     @default(PENDING) // Status of leave (pending, approved, etc.)
+  month          String          // leave report month
+  year           Int             // leave report year
+  generatedAt    DateTime        @default(now())
+}
+
+model PerformanceReport {
+  id             Int             @id @default(autoincrement())
+  employee       Employee        @relation(fields: [employeeId], references: [id])
+  employeeId     Int
+  rating         Int             // Performance rating (scale of 1-10)
+  taskCompleted  Int             // Number of tasks completed in the period
+  feedback       String?         // Performance feedback
+  month          String          // Performance report month
+  year           Int             // Performance report year
+  generatedAt    DateTime        @default(now())
+}
+enum ReportType {
+  ATTENDANCE
+  PAYROLL
+  LEAVE
+  PERFORMANCE
+}
+
+enum MetricType {
+  EMPLOYEE_COUNT
+  PAYROLL_SUMMARY
+  LEAVE_STATUS
+  ATTENDANCE_OVERVIEW
+}
+
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+
+model Notification {
+  id              Int             @id @default(autoincrement())
+  type            NotificationType // Enum: Defines the type of notification (email, internal, etc.)
+  recipient       Employee        @relation(fields: [recipientId], references: [id]) // Employee receiving the notification
+  recipientId     Int
+  message         String          // The content of the notification
+  status          NotificationStatus @default(PENDING) // Enum: Status of the notification (sent, pending, etc.)
+  createdAt       DateTime        @default(now())
+  sentAt          DateTime?       // When the notification was actually sent
+  readAt          DateTime?       // Timestamp for when the notification was read (for internal notifications)
+  emailNotification EmailNotification[]
+}
+
+model EmailNotification {
+  id              Int             @id @default(autoincrement())
+  notification    Notification    @relation(fields: [notificationId], references: [id])
+  notificationId  Int
+  email           String          // The email address to which the notification is sent
+  subject         String          // Email subject
+  sentAt          DateTime?       // When the email was sent
+  status          EmailStatus     @default(PENDING) // Enum to track email delivery status
+}
+
+model Alert {
+  id              Int             @id @default(autoincrement())
+  eventType       AlertEventType  // Enum: The event triggering the alert (leave expiration, payroll processing, etc.)
+  message         String          // The alert message
+  recipient       Employee        @relation(fields: [recipientId], references: [id])
+  recipientId     Int
+  createdAt       DateTime        @default(now())
+  sentAt          DateTime?       // Timestamp when the alert was sent
+  readAt          DateTime?       // If it’s an internal alert, timestamp for when it was read
+}
+
+model SystemAnnouncement {
+  id              Int             @id @default(autoincrement())
+  title           String          // Title of the system announcement
+  message         String          // The body of the announcement
+  targetGroup     TargetGroup     // Enum to specify which group should receive the announcement (e.g., all employees, HR)
+  createdAt       DateTime        @default(now())
+  validUntil      DateTime?       // Optional: When the announcement expires
+}
+
+enum NotificationType {
+  EMAIL
+  INTERNAL
+  SYSTEM_ALERT
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  READ
+  FAILED
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum AlertEventType {
+  LEAVE_APPROVAL
+  TASK_ASSIGNMENT
+  PAYROLL_PROCESSED
+  LEAVE_EXPIRATION
+}
+
+enum TargetGroup {
+  ALL_EMPLOYEES
+  DEPARTMENT
+  HR
+}
+
+
+model Document {
+  id               Int              @id @default(autoincrement())
+  title            String           // Title or name of the document
+  documentType     DocumentType     // Enum: Type of document (contract, policy, resume, etc.)
+  employee         Employee?        @relation(fields: [employeeId], references: [id]) // Optional relation if the document is employee-specific
+  employeeId       Int?             // Nullable, for employee-specific documents
+  filePath         String           // Path or URL where the document is stored
+  uploadedAt       DateTime         @default(now()) // When the document was uploaded
+  expiryDate       DateTime?        // Optional expiry date for certifications or IDs
+  status           DocumentStatus    @default(ACTIVE) // Enum: Document status (active, expired, archived)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt // Track the last update time
+  documentLog       DocumentLog[]
+}
+
+
+model DocumentLog {
+  id               Int              @id @default(autoincrement())
+  document         Document         @relation(fields: [documentId], references: [id])
+  documentId       Int
+  action           DocumentAction    // Enum: Action performed on the document (uploaded, updated, deleted)
+  performedBy      Employee         @relation(fields: [performedById], references: [id])
+  performedById    Int
+  performedAt      DateTime         @default(now()) // Timestamp when the action was performed
+}
+
+enum DocumentType {
+  CONTRACT
+  POLICY
+  RESUME
+  OFFER_LETTER
+  CERTIFICATION
+  ID
+  REPORT
+  OTHER
+}
+
+enum DocumentStatus {
+  ACTIVE
+  EXPIRED
+  ARCHIVED
+}
+
+enum DocumentAction {
+  UPLOADED
+  UPDATED
+  DELETED
+  ARCHIVED
+}
+
+model CompanySettings {
+  id               Int              @id @default(autoincrement())
+  companyName      String           // Name of the company
+  address          String           // Company address
+  contactInfo      String           // Contact information (phone, email, etc.)
+  timezone         String           // Timezone of the company (e.g., "Asia/Dhaka")
+  workingHours     String           // Working hours (e.g., "9 AM - 5 PM")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt // Track the last update time
+}
+
+
+model Holiday {
+  id               Int              @id @default(autoincrement())
+  date             DateTime         // Date of the holiday
+  name             String           // Name of the holiday (e.g., Eid, National Day)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt // Track the last update time
+}
+
