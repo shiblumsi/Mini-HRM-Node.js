@@ -19,31 +19,33 @@ model Admin {
   password      String
 }
 
-enum userRole {
-  EMPLOYEE
-  HR
+model Role {
+  id            Int       @id @default(autoincrement())
+  role          String    @unique
+  user          User[]
 }
 model User {
   id            Int       @id @default(autoincrement())
   email         String    @unique
   password      String
-  role          userRole  @default(EMPLOYEE)
+  role          Role      @relation(fields: [roleId], references: [id])
+  roleId        Int
   passwordResetToken  String?
   passwordResetExpires DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  employee      Employee[]
-  hr            Hr[]
+  employee      Employee?
+  hr            Hr?
 }
 
 model Hr {
   id            Int          @id @default(autoincrement())
   user          User         @relation(fields: [userId], references: [id])
-  userId        Int
-  email         String       @unique
-  firstName     String
-  lastName      String
-  contact       String
+  userId        Int           @unique
+  firstName     String?
+  lastName      String?
+  contact       String?
+  image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   Interview     Interview[]
@@ -59,15 +61,18 @@ model Department {
   updatedAt     DateTime     @updatedAt
   jobPosition   JobPosition[]
   dashboardMetrics  DashboardMetrics[]
+  designation    Designation[]
 }
 
 model Designation {
   id            Int          @id @default(autoincrement())
   title         String       @unique
-  employees     Employee[]   // Relation with Employee
+  department    Department    @relation(fields: [departmentId], references: [id])
+  departmentId  Int
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   onboarding    Onboarding[]
+  employees     Employee[]   // Relation with Employee
 }
 
 
@@ -79,21 +84,20 @@ enum EmpStatus {
 model Employee {
   id            Int          @id @default(autoincrement())
   user          User         @relation(fields: [userId], references: [id])
-  userId        Int
-  email         String       @unique
-  firstName     String
-  lastName      String
-  contact       String
-  hireDate      DateTime
-  dob           DateTime
-  address       String
+  userId        Int           @unique
+  firstName     String?
+  lastName      String?
+  contact       String?
+  hireDate      DateTime?
+  dob           DateTime?
+  address       String?
   status        EmpStatus     @default(ACTIVE)
   prevCompany   String?
-  imageUrl      String
-  department    Department?   @relation(fields: [departmentId], references: [id])
-  departmentId  Int?
-  designation   Designation?  @relation(fields: [designationId], references: [id])
-  designationId Int?
+  image         String?
+  department    Department   @relation(fields: [departmentId], references: [id])
+  departmentId  Int
+  designation   Designation  @relation(fields: [designationId], references: [id])
+  designationId Int
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   attendance    Attendance[]
