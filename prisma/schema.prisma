@@ -121,12 +121,18 @@ model Attendance {
   id             Int          @id @default(autoincrement())   // Unique identifier for each attendance record
   employee       Employee     @relation(fields: [employeeId], references: [id]) // Relationship to the Employee model
   employeeId     Int          // Foreign key referencing the Employee's ID
-  checkIn        DateTime     // Timestamp for when the employee clocks in
-  checkOut       DateTime?    // Timestamp for when the employee clocks out (optional)
+  checkIn        String       // Timestamp for when the employee clocks in
+  checkOut       String?      // Timestamp for when the employee clocks out (optional)
   overtime       Float?       // Number of overtime hours worked (optional)
+  month           String
+  year            Int?
+  attendanceDate String        @default("01") // Set a default value
+  workHoure      Float?
   lateArrival    Boolean      @default(false) // Indicates if the employee arrived late
   createdAt      DateTime     @default(now()) // Record creation timestamp
   updatedAt      DateTime     @updatedAt
+
+  @@unique([employeeId, month, year, attendanceDate])
 }
 
 
