@@ -7,6 +7,7 @@ const globalErrorHandler = require('./middlewares/globalErrorHandler');
 const departmentRoute = require('./routes/departmentRoute');
 const designationRoute = require('./routes/designationRoute');
 const userProfileRoute = require('./routes/userProfileRoute');
+const employeeRoute = require('./routes/employeeRoute');
 const authRoute = require('./routes/authRoute');
 const roleRoute = require('./routes/admin/roleRoute');
 const userRoute = require('./routes/admin/userRoute');
@@ -33,6 +34,7 @@ app.use('/api/role', roleRoute);
 app.use('/api/user/', userRoute);
 app.use('/api/auth/', authRoute);
 app.use('/api/user/profile', userProfileRoute);
+app.use('/api/employee', employeeRoute);
 
 
 //Path Not Found Middleware
