@@ -9,6 +9,8 @@ const designationRoute = require('./routes/designationRoute');
 const userProfileRoute = require('./routes/userProfileRoute');
 const attendanceRoute = require('./routes/attendanceRoute');
 const employeeRoute = require('./routes/employeeRoute');
+const leaveTypeRoute = require('./routes/leaveTypeRoute');
+const leaveRoute = require('./routes/leaveRoute');
 const authRoute = require('./routes/authRoute');
 const roleRoute = require('./routes/admin/roleRoute');
 const userRoute = require('./routes/admin/userRoute');
@@ -37,6 +39,8 @@ app.use('/api/auth/', authRoute);
 app.use('/api/user/profile', userProfileRoute);
 app.use('/api/employee', employeeRoute);
 app.use('/api/attendance', attendanceRoute);
+app.use('/api/leave-types', leaveTypeRoute);
+app.use('/api/leave', leaveRoute);
 
 
 //Path Not Found Middleware
