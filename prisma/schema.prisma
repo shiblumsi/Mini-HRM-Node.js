@@ -115,14 +115,15 @@ model Employee {
   alert         Alert[]
   document      Document[]
   documentLog   DocumentLog[]
+  monthlyAttendanceReport MonthlyAttendanceReport[]
 }
 
 model Attendance {
   id             Int          @id @default(autoincrement())   // Unique identifier for each attendance record
   employee       Employee     @relation(fields: [employeeId], references: [id]) // Relationship to the Employee model
   employeeId     Int          // Foreign key referencing the Employee's ID
-  checkIn        String       // Timestamp for when the employee clocks in
-  checkOut       String?      // Timestamp for when the employee clocks out (optional)
+  checkIn        DateTime       // Timestamp for when the employee clocks in
+  checkOut       DateTime?      // Timestamp for when the employee clocks out (optional)
   overtime       Float?       // Number of overtime hours worked (optional)
   month           String
   year            Int?
@@ -134,6 +135,30 @@ model Attendance {
 
   @@unique([employeeId, month, year, attendanceDate])
 }
+
+
+model MonthlyAttendanceReport {
+  id                Int      @id @default(autoincrement()) // Unique identifier for each report
+  employeeId       Int      // Foreign key referencing the Employee's ID
+  month            String   // Month of the report
+  year             Int      // Year of the report
+  totalWorkingDays Int      // Total working days in the month
+  daysPresent      Int      // Number of days present
+  daysAbsent       Int      // Number of days absent
+  leaveDays        Int      // Number of leave days
+  lateArrivals     Int      // Number of late arrivals
+  earlyDepartures  Int      // Number of early departures
+  averageWorkHours Float?   // Average working hours
+  overtimeHours    Float?    // Total overtime hours
+
+  employee         Employee  @relation(fields: [employeeId], references: [id]) // Relationship to Employee
+
+  createdAt        DateTime  @default(now()) // Record creation timestamp
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([employeeId, month, year]) // Ensures no duplicate reports for the same employee in a month
+}
+
 
 
 enum leaveStatus {
@@ -605,4 +630,7 @@ model Holiday {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt // Track the last update time
 }
+
+
+
 
