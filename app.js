@@ -1,7 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
-
+const AppError = require('./utils/appError');
 const globalErrorHandler = require('./middlewares/globalErrorHandler');
 
 const departmentRoute = require('./routes/departmentRoute');
@@ -20,7 +20,14 @@ const leaveRoute = require('./routes/leaveRoute');
 const authRoute = require('./routes/authRoute');
 const roleRoute = require('./routes/admin/roleRoute');
 const userRoute = require('./routes/admin/userRoute');
-const AppError = require('./utils/appError');
+
+//*Recruitment Management*
+const jobsRoute = require('./routes/recruitment/jobsRoute');
+const applicationRoute = require('./routes/recruitment/applicationRoute');
+const interviewRoute = require('./routes/recruitment/interviewRoute');
+const onboardingRoute = require('./routes/recruitment/onboardingRoute');
+
+
 
 dotenv.config();
 
@@ -53,7 +60,10 @@ app.use('/api/payroll', payrollRoute);
 app.use('/api/payroll-transactions', payrollTransactionRoute);
 app.use('/api/task', taskRoute);
 app.use('/api/performance', performanceRoute);
-
+app.use('/api/job', jobsRoute);
+app.use('/api/application', applicationRoute);
+app.use('/api/interview', interviewRoute);
+app.use('/api/onboarding', onboardingRoute);
 
 //Path Not Found Middleware
 app.all('*', (req, res, next) => {
