@@ -223,7 +223,7 @@ model SalaryStructure {
   updatedAt        DateTime @updatedAt
   payroll          Payroll[]
 
-  @@unique([employeeId, month, year]) // Ensure uniqueness by employeeId, month, and year
+  @@unique([employeeId, month, year]) 
 }
 
 
@@ -235,13 +235,12 @@ model Payroll {
   year               Int              
   salaryStructure    SalaryStructure     @relation(fields: [salaryStructureId], references: [id])
   salaryStructureId  Int
-  status             PayrollStatus       @default(PENDING) // Enum to track payroll status
-  totalPayable       Float               // Total amount payable for that month
+  status             PayrollStatus       @default(PENDING) 
+  totalPayable       Float              
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
-  PayrollTransaction PayrollTransaction[] // Relation to payroll transactions
+  PayrollTransaction PayrollTransaction[] 
 
-  // Ensure uniqueness by employeeId, month, and year
   @@unique([employeeId, month, year]) 
 }
 
@@ -313,8 +312,6 @@ enum TaskPriority {
   HIGH
   URGENT
 }
-
-
 
 model JobPosition {
   id              Int              @id @default(autoincrement())

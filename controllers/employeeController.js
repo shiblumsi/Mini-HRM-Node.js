@@ -23,6 +23,8 @@ exports.allEmployees = catchAsync(async (req, res, next) => {
 
 exports.getEmployeeById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
+  console.log('hfgjsdf',typeof(id));
+  
 
   const employee = await prisma.employee.findUnique({
     where: { id: Number(id) },
