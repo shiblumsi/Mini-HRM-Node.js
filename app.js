@@ -10,6 +10,10 @@ const userProfileRoute = require('./routes/userProfileRoute');
 const attendanceRoute = require('./routes/attendanceRoute');
 const employeeRoute = require('./routes/employeeRoute');
 const leaveTypeRoute = require('./routes/leaveTypeRoute');
+const basicSalaryRoute = require('./routes/basicSalaryRoute');
+const payrollRoute = require('./routes/payrollRoute');
+const salaryStructureRoutes = require('./routes//salaryStructureRoutes');
+const payrollTransactionRoute = require('./routes//payrollTransactionRoute');
 const leaveRoute = require('./routes/leaveRoute');
 const authRoute = require('./routes/authRoute');
 const roleRoute = require('./routes/admin/roleRoute');
@@ -41,6 +45,10 @@ app.use('/api/employee', employeeRoute);
 app.use('/api/attendance', attendanceRoute);
 app.use('/api/leave-types', leaveTypeRoute);
 app.use('/api/leave', leaveRoute);
+app.use('/api/salary', basicSalaryRoute);
+app.use('/api/salary-structure', salaryStructureRoutes);
+app.use('/api/payroll', payrollRoute);
+app.use('/api/payroll-transactions', payrollTransactionRoute);
 
 
 //Path Not Found Middleware

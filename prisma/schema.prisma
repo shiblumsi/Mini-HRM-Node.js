@@ -116,6 +116,7 @@ model Employee {
   document      Document[]
   documentLog   DocumentLog[]
   monthlyAttendanceReport MonthlyAttendanceReport[]
+  basicSalary   BasicSalary[]
 }
 
 model Attendance {
@@ -192,36 +193,56 @@ model LeaveType {
   leaves          Leave[]
   leaveReport     LeaveReport[]
 }
-
-
-model SalaryStructure {
-  id           Int         @id @default(autoincrement())
-  employee     Employee    @relation(fields: [employeeId], references: [id])
-  employeeId   Int
-  basicSalary  Float
-  houseAllowance Float?
-  medicalAllowance Float?
-  otherAllowance  Float?
-  overtimeRate  Float?
-  deductions   Float?      // Any deductions like tax, provident fund
-  grossSalary  Float       // Calculated as basicSalary + allowances - deductions
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  payroll      Payroll[]
+model BasicSalary {
+  id          Int       @id @default(autoincrement())
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  employeeId  Int       @unique
+  amount      Float
+  effectiveDate DateTime // Date when this basic salary becomes effective
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  salaryStructure    SalaryStructure[]
 }
 
+model SalaryStructure {
+  id              Int        @id @default(autoincrement())
+  employee        Employee   @relation(fields: [employeeId], references: [id])
+  employeeId      Int
+  basicSalary     BasicSalary @relation(fields: [basicSalaryId], references: [id])
+  basicSalaryId   Int
+  houseAllowance   Float?
+  medicalAllowance  Float?
+  otherAllowance    Float?
+  overtimeHours     Float?
+  overtimeRate     Float?
+  deductions       Float? 
+  grossSalary      Float 
+  month            Int 
+  year             Int 
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  payroll          Payroll[]
+
+  @@unique([employeeId, month, year]) // Ensure uniqueness by employeeId, month, and year
+}
+
+
 model Payroll {
-  id            Int         @id @default(autoincrement())
-  employee      Employee    @relation(fields: [employeeId], references: [id])
-  employeeId    Int
-  month         String      // E.g., 'September 2024'
-  salaryStructure SalaryStructure @relation(fields: [salaryStructureId], references: [id])
-  salaryStructureId Int
-  status        PayrollStatus  @default(PENDING) // Enum to track payroll status
-  totalPayable  Float         // Total amount payable for that month
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  PayrollTransaction PayrollTransaction[]
+  id                 Int                @id @default(autoincrement())
+  employee           Employee           @relation(fields: [employeeId], references: [id])
+  employeeId         Int
+  month              Int            
+  year               Int              
+  salaryStructure    SalaryStructure     @relation(fields: [salaryStructureId], references: [id])
+  salaryStructureId  Int
+  status             PayrollStatus       @default(PENDING) // Enum to track payroll status
+  totalPayable       Float               // Total amount payable for that month
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  PayrollTransaction PayrollTransaction[] // Relation to payroll transactions
+
+  // Ensure uniqueness by employeeId, month, and year
+  @@unique([employeeId, month, year]) 
 }
 
 model PayrollTransaction {
