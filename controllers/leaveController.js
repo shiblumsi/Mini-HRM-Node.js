@@ -1,6 +1,7 @@
 const { prisma } = require('../DB/db.config');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const { sendEmail } = require('../utils/sendMail');
 
 exports.applyLeave = catchAsync(async (req, res, next) => {
   const { employeeId, leaveTypeId, startDate, endDate } = req.body;
@@ -88,7 +89,7 @@ exports.applyLeave = catchAsync(async (req, res, next) => {
   });
 });
 
-// Approve a leave
+// Approve a leave with email notification
 exports.approveLeave = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { approvedBy } = req.body; // User who approved the leave
@@ -96,6 +97,13 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
   // Find the leave request
   const leave = await prisma.leave.findUnique({
     where: { id: Number(id) },
+    include: { 
+      employee: {
+        include: { 
+          user: { select: { email: true } }  // Include the user's email
+        }
+      } 
+    },
   });
 
   if (!leave) {
@@ -117,12 +125,38 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
     },
   });
 
+  // Ensure the employee's user email exists
+  const email = leave.employee.user.email;
+  console.log('kbsbldjfbkjdlsb',email);
+  
+  if (!email) {
+    return next(new AppError('Employee email not found', 400));
+  }
+
+  // Create an email notification in the database
+  const notification = await prisma.notification.create({
+    data: {
+      type: 'EMAIL',
+      recipientId: leave.employeeId,
+      message: `Your leave request from ${leave.startDate} to ${leave.endDate} has been approved.`,
+      status: 'PENDING',
+    },
+  });
+
+  // Send the email notification
+  await sendEmail({
+    to: email, // Employee's user email
+    subject: 'Leave Approval Notification',
+    text: notification.message,
+  });
+
   res.json({
     status: 'success',
-    message: 'Leave request approved successfully',
+    message: 'Leave request approved and notification sent successfully',
     data: approvedLeave,
   });
 });
+
 
 // Reject a leave
 exports.rejectLeave = catchAsync(async (req, res, next) => {
@@ -319,59 +353,61 @@ exports.generateLeaveReport = catchAsync(async (req, res, next) => {
   }
 });
 
-
 // Generate leave reports by employee ID
 exports.generateLeaveReportByEmpId = catchAsync(async (req, res, next) => {
-    const { employeeId } = req.params; // Get employeeId from request parameters
+  const { employeeId } = req.params; // Get employeeId from request parameters
 
-    try {
-        // Fetch leave counts based on their status for a specific employee
-        const leaveReports = await prisma.leave.groupBy({
-            where: { employeeId: Number(employeeId) }, // Filter by employeeId
-            by: ['status'],
-            _count: {
-                id: true,
-            },
-        });
+  try {
+    // Fetch leave counts based on their status for a specific employee
+    const leaveReports = await prisma.leave.groupBy({
+      where: { employeeId: Number(employeeId) }, // Filter by employeeId
+      by: ['status'],
+      _count: {
+        id: true,
+      },
+    });
 
-        // Fetch leave balances for the specific employee
-        const leaveBalances = await prisma.leaveType.findMany({
-            include: {
-                leaves: {
-                    where: {
-                        employeeId: Number(employeeId), // Filter by employeeId
-                        status: 'APPROVED', // Or any specific status you want
-                    },
-                },
-            },
-        });
+    // Fetch leave balances for the specific employee
+    const leaveBalances = await prisma.leaveType.findMany({
+      include: {
+        leaves: {
+          where: {
+            employeeId: Number(employeeId), // Filter by employeeId
+            status: 'APPROVED', // Or any specific status you want
+          },
+        },
+      },
+    });
 
-        // Structure the report data
-        const reportData = leaveReports.map(report => ({
-            status: report.status,
-            count: report._count.id,
-        }));
+    // Structure the report data
+    const reportData = leaveReports.map((report) => ({
+      status: report.status,
+      count: report._count.id,
+    }));
 
-        // Calculate balances for each leave type
-        const balanceData = leaveBalances.map(leaveType => {
-            const totalTaken = leaveType.leaves.reduce((sum, leave) => sum + leave.totalDays, 0);
-            return {
-                leaveType: leaveType.name,
-                maxDays: leaveType.maxDays,
-                taken: totalTaken,
-                remaining: leaveType.maxDays - totalTaken,
-            };
-        });
+    // Calculate balances for each leave type
+    const balanceData = leaveBalances.map((leaveType) => {
+      const totalTaken = leaveType.leaves.reduce(
+        (sum, leave) => sum + leave.totalDays,
+        0
+      );
+      return {
+        leaveType: leaveType.name,
+        maxDays: leaveType.maxDays,
+        taken: totalTaken,
+        remaining: leaveType.maxDays - totalTaken,
+      };
+    });
 
-        res.status(200).json({
-            status: 'success',
-            employeeId,
-            data: {
-                report: reportData,
-                leaveBalances: balanceData, // Include leave balances
-            },
-        });
-    } catch (error) {
-        return next(new AppError('Error generating leave report', 500));
-    }
+    res.status(200).json({
+      status: 'success',
+      employeeId,
+      data: {
+        report: reportData,
+        leaveBalances: balanceData, // Include leave balances
+      },
+    });
+  } catch (error) {
+    return next(new AppError('Error generating leave report', 500));
+  }
 });

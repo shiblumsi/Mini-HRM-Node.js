@@ -1,11 +1,13 @@
 const { prisma } = require('../../DB/db.config');
 const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
+const {sendEmail} =require('../../utils/sendMail')
 
-// Assign a new task to an employee
+// Assign a new task to an employee with email notification
 exports.createTask = catchAsync(async (req, res, next) => {
   const { title, description, employeeId, priority, dueDate } = req.body;
 
+  // Create the task
   const task = await prisma.task.create({
     data: {
       title,
@@ -16,13 +18,47 @@ exports.createTask = catchAsync(async (req, res, next) => {
     },
   });
 
+  // Fetch the employee's related user (to get the email)
+  const employee = await prisma.employee.findUnique({
+    where: { id: Number(employeeId) },
+    include: { 
+      user: { select: { email: true } }  // Include the user's email
+    },
+  });
+
+  // Ensure the employee's user email exists
+  const email = employee?.user?.email;
+  
+  if (!email) {
+    return next(new AppError('Employee email not found', 400));
+  }
+
+  // Send the email notification
+  await sendEmail({
+    to: email,  // Employee's user email
+    subject: 'New Task Assigned',
+    message: `You have been assigned a new task: "${title}".\n\nDescription: ${description}\nPriority: ${priority}\nDue Date: ${new Date(dueDate).toLocaleDateString()}`,
+  });
+
+  // Store the notification in the database
+  await prisma.notification.create({
+    data: {
+      type: 'EMAIL',
+      recipientId: employeeId,
+      message: `You have been assigned a new task: "${title}".`,
+      status: 'PENDING', // or 'SENT' based on your logic
+    },
+  });
+
   res.status(201).json({
     status: 'success',
+    message: 'Task created and notification sent successfully',
     data: {
       task,
     },
   });
 });
+
 
 // Retrieve all tasks
 exports.getAllTasks = catchAsync(async (req, res, next) => {
