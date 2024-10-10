@@ -131,6 +131,8 @@ model Attendance {
   attendanceDate String        @default("01") // Set a default value
   workHoure      Float?
   lateArrival    Boolean      @default(false) // Indicates if the employee arrived late
+  isPresent      Boolean      @default(true)
+  isLate         Boolean      @default(false)
   createdAt      DateTime     @default(now()) // Record creation timestamp
   updatedAt      DateTime     @updatedAt
 
@@ -182,6 +184,7 @@ model Leave {
   cancellationDate DateTime?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+
 }
 
 model LeaveType {
@@ -460,7 +463,7 @@ model PayrollReport {
   employee       Employee        @relation(fields: [employeeId], references: [id])
   employeeId     Int
   totalPayable   Float           // Total amount payable within the reporting period
-  month          String          // Payroll report month
+  month          Int          // Payroll report month
   year           Int             // Payroll report year
   status         PayrollStatus   @default(PAID)
   generatedAt    DateTime        @default(now())
@@ -486,7 +489,7 @@ model PerformanceReport {
   rating         Int             // Performance rating (scale of 1-10)
   taskCompleted  Int             // Number of tasks completed in the period
   feedback       String?         // Performance feedback
-  month          String          // Performance report month
+  month          Int          // Performance report month
   year           Int             // Performance report year
   generatedAt    DateTime        @default(now())
 }
