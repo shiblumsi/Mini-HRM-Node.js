@@ -97,12 +97,12 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
   // Find the leave request
   const leave = await prisma.leave.findUnique({
     where: { id: Number(id) },
-    include: { 
+    include: {
       employee: {
-        include: { 
-          user: { select: { email: true } }  // Include the user's email
-        }
-      } 
+        include: {
+          user: { select: { email: true } }, // Include the user's email
+        },
+      },
     },
   });
 
@@ -124,11 +124,18 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
       approvalDate: new Date(),
     },
   });
-
+  // Create alert
+  await prisma.alert.create({
+    data: {
+      eventType: 'LEAVE_APPROVAL',
+      message: `Your leave request from ${leave.startDate} to ${leave.endDate} has been approved.`,
+      recipientId: leave.employeeId,
+    },
+  });
   // Ensure the employee's user email exists
   const email = leave.employee.user.email;
-  console.log('kbsbldjfbkjdlsb',email);
-  
+  console.log('kbsbldjfbkjdlsb', email);
+
   if (!email) {
     return next(new AppError('Employee email not found', 400));
   }
@@ -152,11 +159,10 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
 
   res.json({
     status: 'success',
-    message: 'Leave request approved and notification sent successfully',
+    message: 'Leave request approved, alert created, and notification sent.',
     data: approvedLeave,
   });
 });
-
 
 // Reject a leave
 exports.rejectLeave = catchAsync(async (req, res, next) => {

@@ -62,6 +62,7 @@ model Department {
   jobPosition   JobPosition[]
   dashboardMetrics  DashboardMetrics[]
   designation    Designation[]
+  systemAnnouncement  SystemAnnouncement[]
 }
 
 model Designation {
@@ -525,18 +526,18 @@ model Notification {
   createdAt       DateTime        @default(now())
   sentAt          DateTime?       // When the notification was actually sent
   readAt          DateTime?       // Timestamp for when the notification was read (for internal notifications)
-  emailNotification EmailNotification[]
+  // emailNotification EmailNotification[]
 }
 
-model EmailNotification {
-  id              Int             @id @default(autoincrement())
-  notification    Notification    @relation(fields: [notificationId], references: [id])
-  notificationId  Int
-  email           String          // The email address to which the notification is sent
-  subject         String          // Email subject
-  sentAt          DateTime?       // When the email was sent
-  status          EmailStatus     @default(PENDING) // Enum to track email delivery status
-}
+// model EmailNotification {
+//   id              Int             @id @default(autoincrement())
+//   notification    Notification    @relation(fields: [notificationId], references: [id])
+//   notificationId  Int
+//   email           String          // The email address to which the notification is sent
+//   subject         String          // Email subject
+//   sentAt          DateTime?       // When the email was sent
+//   status          EmailStatus     @default(PENDING) // Enum to track email delivery status
+// }
 
 model Alert {
   id              Int             @id @default(autoincrement())
@@ -556,7 +557,10 @@ model SystemAnnouncement {
   targetGroup     TargetGroup     // Enum to specify which group should receive the announcement (e.g., all employees, HR)
   createdAt       DateTime        @default(now())
   validUntil      DateTime?       // Optional: When the announcement expires
+  departmentId    Int?            // Optional department ID
+  department      Department?     @relation(fields: [departmentId], references: [id]) // Optional relation to department
 }
+
 
 enum NotificationType {
   EMAIL

@@ -1,149 +1,70 @@
-// controllers/notificationsController.js
-const catchAsync = require('../../utils/catchAsync');
-const AppError = require('../../utils/appError');
+
 const { prisma } = require('../../DB/db.config');
+const AppError = require('../../utils/appError'); 
+const catchAsync = require('../../utils/catchAsync');
 
-// // Send Leave Approval Notification
-// exports.sendLeaveApproval = catchAsync(async (req, res, next) => {
-//   const { employeeId, message } = req.body;
 
-//   // Create email notification logic here
-//   const notification = await prisma.notification.create({
-//     data: {
-//       type: 'EMAIL',
-//       recipientId: employeeId,
-//       message,
-//       // other required fields
-//     },
-//   });
+exports.createSystemAnnouncement = catchAsync(async (req, res, next) => {
+  const { title, message, targetGroup, departmentId, validUntil } = req.body;
 
-//   if (!notification) {
-//     return next(new AppError('Failed to send leave approval notification', 500));
-//   }
+  // Check if required fields are provided
+  if (!title || !message || !targetGroup) {
+    return next(new AppError('Title, message, and target group are required.', 400));
+  }
 
-//   res.status(201).json({ status: 'success', data: notification });
-// });
-
-// // Send Task Assignment Notification
-// exports.sendTaskAssignment = catchAsync(async (req, res, next) => {
-//   const { employeeId, message } = req.body;
-
-//   const notification = await prisma.notification.create({
-//     data: {
-//       type: 'EMAIL',
-//       recipientId: employeeId,
-//       message,
-//       // other required fields
-//     },
-//   });
-
-//   if (!notification) {
-//     return next(new AppError('Failed to send task assignment notification', 500));
-//   }
-
-//   res.status(201).json({ status: 'success', data: notification });
-// });
-
-// // Send Payroll Notification
-// exports.sendPayrollNotification = catchAsync(async (req, res, next) => {
-//   const { employeeId, message } = req.body;
-
-//   const notification = await prisma.notification.create({
-//     data: {
-//       type: 'EMAIL',
-//       recipientId: employeeId,
-//       message,
-//       // other required fields
-//     },
-//   });
-
-//   if (!notification) {
-//     return next(new AppError('Failed to send payroll notification', 500));
-//   }
-
-//   res.status(201).json({ status: 'success', data: notification });
-// });
-
-// Create Internal Notification
-exports.createInternalNotification = catchAsync(async (req, res, next) => {
-  const { recipientId, message } = req.body;
-
-  const notification = await prisma.notification.create({
+  // Create a new system announcement
+  const announcement = await prisma.systemAnnouncement.create({
     data: {
-      type: 'INTERNAL',
-      recipientId,
+      title,
       message,
-      // other required fields
+      targetGroup,
+      validUntil: validUntil ? new Date(validUntil) : null, // Convert to Date object if provided
+      departmentId: departmentId || null, // Use null if not provided
     },
   });
 
-  if (!notification) {
-    return next(new AppError('Failed to create internal notification', 500));
+  // Determine the recipients based on the target group
+  let employees = [];
+
+  if (targetGroup === 'ALL_EMPLOYEES') {
+    employees = await prisma.employee.findMany();
+  } else if (targetGroup === 'HR') {
+    employees = await prisma.hr.findMany(); // Get all HR personnel
+  } else if (targetGroup === 'DEPARTMENT') {
+    if (!departmentId) {
+      return next(new AppError('Please specify a departmentId for department-specific announcements.', 400));
+    }
+    employees = await prisma.employee.findMany({
+      where: { departmentId },
+    });
+
+    if (employees.length === 0) {
+      return next(new AppError(`No employees found for department ID ${departmentId}.`, 404));
+    }
+  } else {
+    return next(new AppError('Invalid target group specified.', 400));
   }
 
-  res.status(201).json({ status: 'success', data: notification });
-});
+  // Prepare bulk create data for notifications
+  const notificationsData = employees.map(employee => ({
+    recipientId: employee.id,
+    message: `New Announcement: ${title}`,
+    type: 'SYSTEM_ALERT',
+    status: 'PENDING',
+  }));
 
-// Get Internal Notifications
-exports.getInternalNotifications = catchAsync(async (req, res, next) => {
-  const notifications = await prisma.notification.findMany({
-    where: { type: 'INTERNAL' },
+  // Bulk create notifications
+  await prisma.notification.createMany({
+    data: notificationsData,
   });
 
-  res.status(200).json({ status: 'success', data: notifications });
-});
-
-// Mark Internal Notification as Read
-exports.markInternalNotificationAsRead = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-
-  const notification = await prisma.notification.update({
-    where: { id: Number(id) },
-    data: { readAt: new Date() },
+  // Send response back
+  return res.status(201).json({
+    status: 'success',
+    data: {
+      announcement,
+      employeesNotified: employees.length,
+    },
   });
-
-  if (!notification) {
-    return next(new AppError('Notification not found', 404));
-  }
-
-  res.status(200).json({ status: 'success', data: notification });
 });
 
-// Get Notification Preferences
-exports.getNotificationPreferences = catchAsync(async (req, res, next) => {
-  const { employeeId } = req.params;
-
-  const preferences = await prisma.notificationPreferences.findUnique({
-    where: { employeeId: Number(employeeId) },
-  });
-
-  if (!preferences) {
-    return next(new AppError('Notification preferences not found', 404));
-  }
-
-  res.status(200).json({ status: 'success', data: preferences });
-});
-
-// Update Notification Preferences
-exports.updateNotificationPreferences = catchAsync(async (req, res, next) => {
-  const { employeeId } = req.params;
-  const { preferences } = req.body;
-
-  const updatedPreferences = await prisma.notificationPreferences.update({
-    where: { employeeId: Number(employeeId) },
-    data: preferences,
-  });
-
-  res.status(200).json({ status: 'success', data: updatedPreferences });
-});
-
-// Get Notification History
-exports.getNotificationHistory = catchAsync(async (req, res, next) => {
-  const { employeeId } = req.params;
-
-  const history = await prisma.notification.findMany({
-    where: { recipientId: Number(employeeId) },
-  });
-
-  res.status(200).json({ status: 'success', data: history });
-});

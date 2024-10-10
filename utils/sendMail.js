@@ -16,7 +16,7 @@ exports.sendEmail = async (options) => {
   
   // Define email options
   const mailOptions = {
-    from: 'D-Bug Inventory <inventory@dbug.dev>',
+    from: 'D-Bug HRM <hrm@dbug.dev>',
     to: options.to, 
     subject: options.subject,
     text: options.message,

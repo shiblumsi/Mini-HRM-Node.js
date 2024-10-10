@@ -35,11 +35,19 @@ exports.generatePayroll = catchAsync(async (req, res, next) => {
       },
     });
 
+    // Create alert for payroll processed
+    await prisma.alert.create({
+      data: {
+        eventType: 'PAYROLL_PROCESSED',
+        message: `Your payroll for ${month}/${year} has been processed.`,
+        recipientId: employeeId,
+      },
+    });
     // Fetch the employee's related user (to get the email)
     const employee = await prisma.employee.findUnique({
       where: { id: Number(employeeId) },
-      include: { 
-        user: { select: { email: true } }  // Include the user's email
+      include: {
+        user: { select: { email: true } }, // Include the user's email
       },
     });
 
@@ -84,7 +92,6 @@ exports.generatePayroll = catchAsync(async (req, res, next) => {
     return next(new AppError('Error generating payroll', 500));
   }
 });
-
 
 // Retrieve payroll
 exports.getPayroll = catchAsync(async (req, res, next) => {

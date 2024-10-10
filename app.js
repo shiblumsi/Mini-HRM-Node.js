@@ -28,6 +28,7 @@ const interviewRoute = require('./routes/recruitment/interviewRoute');
 const onboardingRoute = require('./routes/recruitment/onboardingRoute');
 
 const reportRoute = require('./routes/reportRoute');
+const notificationRoute = require('./routes/notifications&alerts/notificationRoute');
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ app.use('/api/application', applicationRoute);
 app.use('/api/interview', interviewRoute);
 app.use('/api/onboarding', onboardingRoute);
 app.use('/api/report', reportRoute);
+app.use('/api/notification', notificationRoute);
 
 //Path Not Found Middleware
 app.all('*', (req, res, next) => {

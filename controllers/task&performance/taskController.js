@@ -1,7 +1,7 @@
 const { prisma } = require('../../DB/db.config');
 const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
-const {sendEmail} =require('../../utils/sendMail')
+const { sendEmail } = require('../../utils/sendMail');
 
 // Assign a new task to an employee with email notification
 exports.createTask = catchAsync(async (req, res, next) => {
@@ -21,23 +21,34 @@ exports.createTask = catchAsync(async (req, res, next) => {
   // Fetch the employee's related user (to get the email)
   const employee = await prisma.employee.findUnique({
     where: { id: Number(employeeId) },
-    include: { 
-      user: { select: { email: true } }  // Include the user's email
+    include: {
+      user: { select: { email: true } }, // Include the user's email
+    },
+  });
+
+  // Create alert for task assignment
+  await prisma.alert.create({
+    data: {
+      eventType: 'TASK_ASSIGNMENT',
+      message: `A new task '${title}' has been assigned to you.`,
+      recipientId: employeeId,
     },
   });
 
   // Ensure the employee's user email exists
   const email = employee?.user?.email;
-  
+
   if (!email) {
     return next(new AppError('Employee email not found', 400));
   }
 
   // Send the email notification
   await sendEmail({
-    to: email,  // Employee's user email
+    to: email, // Employee's user email
     subject: 'New Task Assigned',
-    message: `You have been assigned a new task: "${title}".\n\nDescription: ${description}\nPriority: ${priority}\nDue Date: ${new Date(dueDate).toLocaleDateString()}`,
+    message: `You have been assigned a new task: "${title}".\n\nDescription: ${description}\nPriority: ${priority}\nDue Date: ${new Date(
+      dueDate
+    ).toLocaleDateString()}`,
   });
 
   // Store the notification in the database
@@ -58,7 +69,6 @@ exports.createTask = catchAsync(async (req, res, next) => {
     },
   });
 });
-
 
 // Retrieve all tasks
 exports.getAllTasks = catchAsync(async (req, res, next) => {
@@ -152,23 +162,22 @@ exports.completeTask = catchAsync(async (req, res, next) => {
 });
 
 exports.getTaskCompletionStatus = catchAsync(async (req, res, next) => {
-    const { employeeId } = req.query; // Use query instead of body
-  
-    const tasks = await prisma.task.findMany({
-      where: {
-        employeeId: employeeId ? Number(employeeId) : undefined,
-      },
-      select: {
-        id: true,
-        status: true,
-      },
-    });
-  
-    res.status(200).json({
-      status: 'success',
-      data: {
-        tasks,
-      },
-    });
+  const { employeeId } = req.query; // Use query instead of body
+
+  const tasks = await prisma.task.findMany({
+    where: {
+      employeeId: employeeId ? Number(employeeId) : undefined,
+    },
+    select: {
+      id: true,
+      status: true,
+    },
   });
-  
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tasks,
+    },
+  });
+});
