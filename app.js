@@ -1,9 +1,15 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
+const path = require('path');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./middlewares/globalErrorHandler');
 
+//swagger
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const swaggerDocument = YAML.load(path.join(__dirname, 'docs/api.yaml'));
+//routes
 const departmentRoute = require('./routes/departmentRoute');
 const designationRoute = require('./routes/designationRoute');
 const userProfileRoute = require('./routes/userProfileRoute');
@@ -44,6 +50,9 @@ app.get('/', (req, res) => {
   });
 });
 
+// Serve Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 //Routes
 app.use('/api/department', departmentRoute);
 app.use('/api/designation', designationRoute);
@@ -61,7 +70,7 @@ app.use('/api/payroll', payrollRoute);
 app.use('/api/payroll-transactions', payrollTransactionRoute);
 app.use('/api/task', taskRoute);
 app.use('/api/performance', performanceRoute);
-app.use('/api/job', jobsRoute);
+app.use('/api/job-openings', jobsRoute);
 app.use('/api/application', applicationRoute);
 app.use('/api/interview', interviewRoute);
 app.use('/api/onboarding', onboardingRoute);

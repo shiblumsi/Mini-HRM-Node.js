@@ -1,0 +1,3327 @@
+openapi: 3.0.0
+info:
+  title: HRM API
+  description: API documentation for the Human Resource Management system.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api # Local
+
+tags:
+  - name: Admin
+    description: Admin operations
+  - name: auth
+    description: Admin operations
+  - name: department
+    description: Department operations
+  - name: designation
+    description: Designation operations
+  - name: employee
+    description: Employee operations
+  - name: Attendance
+    description: Operations related to Attendance management
+  - name: Payroll
+    description: Operations related to payroll management
+  - name: Payroll Transactions
+    description: Operations related to payroll Transactions
+  - name: Task
+    description: Operations related to Task management
+  - name: Performance
+    description: Operations related to Performance management
+  - name: Leave
+    description: Operations related to Leave management
+  - name: Leave Types
+    description: Operations related to Leave Types management
+  - name: Report
+    description: Endpoints for generating and retrieving reports
+
+  - name: Recruitment - Job Openings
+    description: Endpoints related to job openings in the recruitment process
+  - name: Recruitment - Applications
+    description: Endpoints related to job applications in the recruitment process
+  - name: Recruitment - Interviews
+    description: Endpoints related to interviews in the recruitment process
+  - name: Recruitment - Onboarding
+    description: Endpoints related to onboarding new hires in the recruitment process
+
+paths:
+  /admin/create/hr:
+    post:
+      tags:
+        - Admin
+      summary: Create a new HR user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                contact:
+                  type: string
+      responses:
+        '201':
+          description: HR created successfully
+        '400':
+          description: Bad request
+
+  /admin/create/employee:
+    post:
+      tags:
+        - Admin
+        - employee
+      summary: Create a new employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                contact:
+                  type: string
+                departmentId:
+                  type: integer
+                designationId:
+                  type: integer
+      responses:
+        '201':
+          description: Employee created successfully
+        '400':
+          description: Bad request
+
+  /login:
+    post:
+      tags:
+        - auth
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Unauthorized
+
+  /department:
+    post:
+      tags:
+        - department
+      summary: Create a new department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Department created successfully
+        '400':
+          description: Bad request
+
+  /designation:
+    post:
+      tags:
+        - designation
+      summary: Create a new designation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                departmentId:
+                  type: integer
+      responses:
+        '201':
+          description: Designation created successfully
+        '400':
+          description: Bad request
+
+  /employee:
+    get:
+      tags:
+        - employee
+      summary: Retrieve all employees
+      responses:
+        '200':
+          description: A list of employees
+        '404':
+          description: Employees not found
+
+  /employee/{id}:
+    get:
+      tags:
+        - employee
+      summary: Get employee by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the employee
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Employee details retrieved
+        '404':
+          description: Employee not found
+
+    patch:
+      tags:
+        - employee
+      summary: Update employee details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the employee
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                contact:
+                  type: string
+                address:
+                  type: string
+      responses:
+        '200':
+          description: Employee updated successfully
+        '404':
+          description: Employee not found
+
+    delete:
+      tags:
+        - employee
+      summary: Delete employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the employee
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Employee deleted successfully
+        '404':
+          description: Employee not found
+
+  /employee/{id}/upload-document:
+    post:
+      tags:
+        - employee
+      summary: Upload document for employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the employee
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Document uploaded successfully
+        '404':
+          description: Employee not found
+
+  /employee/{id}/document:
+    get:
+      tags:
+        - employee
+      summary: Get employee documents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the employee
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Employee documents retrieved
+        '404':
+          description: Employee not found
+
+  /attendance/record:
+    post:
+      tags:
+        - Attendance
+      summary: Record Attendance
+      description: Records a new attendance entry for an employee.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: string
+                  description: The ID of the employee.
+                checkIn:
+                  type: string
+                  format: date-time
+                  description: Check-in time.
+                date:
+                  type: string
+                  format: date
+                  description: Attendance date.
+      responses:
+        '201':
+          description: Attendance recorded successfully.
+        '400':
+          description: Invalid input data.
+
+  /attendance/{id}:
+    get:
+      tags:
+        - Attendance
+      summary: Get Attendance by ID
+      description: Retrieves a specific attendance record based on the provided ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the attendance record.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Attendance record retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  employeeId:
+                    type: string
+                  checkIn:
+                    type: string
+                    format: date-time
+                  checkOut:
+                    type: string
+                    format: date-time
+                  date:
+                    type: string
+                    format: date
+        '404':
+          description: Attendance record not found.
+
+  /attendance/{id}/update/checkout:
+    patch:
+      tags:
+        - Attendance
+      summary: Update Check-Out Time
+      description: Updates the check-out time for a specific attendance record identified by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the attendance record.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                checkOut:
+                  type: string
+                  format: date-time
+                  description: New check-out time.
+      responses:
+        '200':
+          description: Check-out time updated successfully.
+        '404':
+          description: Attendance record not found.
+
+  /attendance:
+    get:
+      tags:
+        - Attendance
+      summary: Get Attendance by Date
+      description: Retrieves attendance records based on various filters (like employee ID, date, month, year, etc.).
+      parameters:
+        - name: employeeId
+          in: query
+          description: The ID of the employee.
+          schema:
+            type: string
+        - name: date
+          in: query
+          description: Filter records by date.
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Attendance records retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    employeeId:
+                      type: string
+                    checkIn:
+                      type: string
+                      format: date-time
+                    checkOut:
+                      type: string
+                      format: date-time
+                    date:
+                      type: string
+                      format: date
+
+  /attendance/reports/monthly:
+    get:
+      tags:
+        - Attendance
+      summary: Generate Monthly Attendance Report
+      description: Generates a report for attendance records for a specific month.
+      parameters:
+        - name: month
+          in: query
+          required: true
+          description: The month to generate the report for (1-12).
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: true
+          description: The year to generate the report for.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Monthly attendance report generated successfully.
+        '400':
+          description: Invalid month or year provided.
+
+  /attendance/overtime:
+    get:
+      tags:
+        - Attendance
+      summary: Get Overtime and Late Arrivals
+      description: Retrieves attendance data specifically for overtime worked and late arrivals.
+      responses:
+        '200':
+          description: Overtime and late arrival records retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    employeeId:
+                      type: string
+                    date:
+                      type: string
+                      format: date
+                    overtimeHours:
+                      type: number
+                    lateArrival:
+                      type: boolean
+
+  /attendance/{id}/delete:
+    delete:
+      tags:
+        - Attendance
+      summary: Delete Attendance Record
+      description: Deletes a specific attendance record based on the provided ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the attendance record to delete.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Attendance record deleted successfully.
+        '404':
+          description: Attendance record not found.
+
+  /attendance/summary:
+    get:
+      tags:
+        - Attendance
+      summary: Get Employee Attendance Summary
+      description: Retrieves a summary of attendance for employees.
+      parameters:
+        - name: employeeId
+          in: query
+          description: The ID of the employee.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Attendance summary retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  employeeId:
+                    type: string
+                  totalDaysPresent:
+                    type: integer
+                  totalDaysAbsent:
+                    type: integer
+                  totalOvertimeHours:
+                    type: number
+
+  /leave/apply:
+    post:
+      tags:
+        - Leave
+      summary: Apply for leave
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                leaveTypeId:
+                  type: integer
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Leave application submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+
+  /leave/{id}/approve:
+    put:
+      tags:
+        - Leave
+      summary: Approve a leave request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the leave request to approve
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                approvedBy:
+                  type: string
+      responses:
+        '200':
+          description: Leave request approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '404':
+          description: Leave request not found
+        '400':
+          description: Leave request already processed
+
+  /leave/{id}/reject:
+    put:
+      tags:
+        - Leave
+      summary: Reject a leave request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the leave request to reject
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leave request rejected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '404':
+          description: Leave request not found
+        '400':
+          description: Leave request already processed
+
+  /leave/{id}/update-status:
+    put:
+      tags:
+        - Leave
+      summary: Update leave status (approve/reject)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the leave request to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [APPROVED, REJECTED]
+      responses:
+        '200':
+          description: Leave status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '404':
+          description: Leave request not found
+        '400':
+          description: Invalid status provided
+
+  /leave/employee/{employeeId}/history:
+    get:
+      tags:
+        - Leave
+      summary: Retrieve leave history for a specific employee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          description: ID of the employee
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leave history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Employee ID is required
+
+  /leave/employee/{employeeId}/balance:
+    get:
+      tags:
+        - Leave
+      summary: Retrieve leave balance for a specific employee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          description: ID of the employee
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leave balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+        '400':
+          description: Employee ID is required
+
+  /leave/report:
+    get:
+      tags:
+        - Leave
+      summary: Generate leave report
+      responses:
+        '200':
+          description: Leave report generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+
+  /leave/employee/{employeeId}/report:
+    get:
+      tags:
+        - Leave
+      summary: Generate leave report by employee ID
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          description: ID of the employee
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leave report generated successfully for employee
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  employeeId:
+                    type: integer
+                  data:
+                    type: object
+        '400':
+          description: Employee ID is required
+
+  /leave-types:
+    get:
+      tags:
+        - Leave Types
+      summary: Get All Leave Types
+      description: Retrieves all leave types from the database.
+      responses:
+        '200':
+          description: Successfully retrieved all leave types.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: The ID of the leave type
+                    name:
+                      type: string
+                      description: The name of the leave type
+                    maxDays:
+                      type: integer
+                      description: The maximum number of days allowed for this leave type
+        '500':
+          description: Internal Server Error
+
+    post:
+      tags:
+        - Leave Types
+      summary: Create a New Leave Type
+      description: Adds a new leave type to the database.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the new leave type
+                maxDays:
+                  type: integer
+                  description: The maximum number of days allowed for this leave type
+      responses:
+        '201':
+          description: Successfully created a new leave type.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: The ID of the newly created leave type
+                  name:
+                    type: string
+                    description: The name of the new leave type
+                  maxDays:
+                    type: integer
+                    description: The maximum number of days allowed for this leave type
+        '400':
+          description: Bad Request
+
+  /leave-types/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The ID of the leave type to retrieve, update, or delete.
+        schema:
+          type: integer
+
+    get:
+      tags:
+        - Leave Types
+      summary: Get Leave Type by ID
+      description: Retrieves a leave type based on the provided ID.
+      responses:
+        '200':
+          description: Successfully retrieved the leave type.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: The ID of the leave type
+                  name:
+                    type: string
+                    description: The name of the leave type
+                  maxDays:
+                    type: integer
+                    description: The maximum number of days allowed for this leave type
+        '404':
+          description: Leave type not found.
+
+    put:
+      tags:
+        - Leave Types
+      summary: Update an Existing Leave Type
+      description: Updates the details of an existing leave type.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The updated name of the leave type
+                maxDays:
+                  type: integer
+                  description: The updated maximum number of days allowed for this leave type
+      responses:
+        '200':
+          description: Successfully updated the leave type.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: The ID of the updated leave type
+                  name:
+                    type: string
+                    description: The name of the leave type
+                  maxDays:
+                    type: integer
+                    description: The maximum number of days allowed for this leave type
+        '404':
+          description: Leave type not found.
+        '400':
+          description: Bad Request
+
+    delete:
+      tags:
+        - Leave Types
+      summary: Delete a Leave Type
+      description: Deletes a leave type based on the provided ID.
+      responses:
+        '204':
+          description: Successfully deleted the leave type.
+        '404':
+          description: Leave type not found.
+
+  /payroll/generate:
+    post:
+      tags:
+        - Payroll
+      summary: Generate Payroll
+      description: Generates payroll for a specific employee for a given month and year.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                month:
+                  type: integer
+                year:
+                  type: integer
+      responses:
+        '201':
+          description: Payroll successfully generated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      employeeId:
+                        type: integer
+                      salaryStructureId:
+                        type: integer
+                      month:
+                        type: integer
+                      year:
+                        type: integer
+                      totalPayable:
+                        type: number
+        '400':
+          description: Bad request.
+        '404':
+          description: Salary structure not found.
+        '500':
+          description: Internal server error.
+
+  /payroll/employee/{employeeId}/{month}/{year}:
+    get:
+      tags:
+        - Payroll
+      summary: Get Payroll by Employee ID
+      description: Retrieves payroll for a specific employee based on the month and year.
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          description: ID of the employee.
+          schema:
+            type: integer
+        - name: month
+          in: path
+          required: true
+          description: Month for the payroll.
+          schema:
+            type: integer
+        - name: year
+          in: path
+          required: true
+          description: Year for the payroll.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved payroll.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+        '404':
+          description: Payroll not found.
+
+  /payroll/{month}/{year}:
+    get:
+      tags:
+        - Payroll
+      summary: Get Payrolls by Month and Year
+      description: Retrieves all payrolls for a specific month and year.
+      parameters:
+        - name: month
+          in: path
+          required: true
+          description: Month for which payrolls are retrieved.
+          schema:
+            type: integer
+        - name: year
+          in: path
+          required: true
+          description: Year for which payrolls are retrieved.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved payrolls.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: No payrolls found.
+
+  /payroll/{id}:
+    put:
+      tags:
+        - Payroll
+      summary: Update Payroll Status
+      description: Updates the status of an existing payroll.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the payroll to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Payroll status successfully updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+        '404':
+          description: Payroll not found.
+        '400':
+          description: Bad request.
+
+    delete:
+      tags:
+        - Payroll
+      summary: Delete Payroll
+      description: Deletes an existing payroll based on the ID provided.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the payroll to delete.
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Payroll successfully deleted.
+        '404':
+          description: Payroll not found.
+
+  /payroll/salary-slips/{employeeId}/{month}/{year}:
+    get:
+      tags:
+        - Payroll
+      summary: Get Salary Slip
+      description: Retrieves salary slip for a specific employee for a given month and year.
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          description: ID of the employee.
+          schema:
+            type: integer
+        - name: month
+          in: path
+          required: true
+          description: Month for which the salary slip is requested.
+          schema:
+            type: integer
+        - name: year
+          in: path
+          required: true
+          description: Year for which the salary slip is requested.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved salary slip.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+        '404':
+          description: No salary slip found.
+        '500':
+          description: Internal server error.
+
+  /payroll-transactions:
+    get:
+      tags:
+        - Payroll Transactions
+      summary: Get all payroll transactions
+      parameters:
+        - name: payrollId
+          in: query
+          required: false
+          description: Filter transactions by payroll ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved payroll transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        payrollId:
+                          type: integer
+                        transactionDate:
+                          type: string
+                          format: date-time
+                        amount:
+                          type: number
+                          format: float
+                        paymentMethod:
+                          type: string
+                        transactionStatus:
+                          type: string
+
+    post:
+      tags:
+        - Payroll Transactions
+      summary: Create a new payroll transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payrollId:
+                  type: integer
+                paymentMethod:
+                  type: string
+                transactionStatus:
+                  type: string
+      responses:
+        '201':
+          description: Successfully created payroll transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      payrollId:
+                        type: integer
+                      transactionDate:
+                        type: string
+                        format: date-time
+                      amount:
+                        type: number
+                        format: float
+                      paymentMethod:
+                        type: string
+                      transactionStatus:
+                        type: string
+
+  /payroll-transactions/{id}:
+    put:
+      tags:
+        - Payroll Transactions
+      summary: Update an existing payroll transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the payroll transaction to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentMethod:
+                  type: string
+                transactionStatus:
+                  type: string
+      responses:
+        '200':
+          description: Successfully updated payroll transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      payrollId:
+                        type: integer
+                      transactionDate:
+                        type: string
+                        format: date-time
+                      amount:
+                        type: number
+                        format: float
+                      paymentMethod:
+                        type: string
+                      transactionStatus:
+                        type: string
+
+    delete:
+      tags:
+        - Payroll Transactions
+      summary: Delete a payroll transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the payroll transaction to delete
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Successfully deleted payroll transaction
+        '404':
+          description: Payroll transaction not found
+
+  /task:
+    post:
+      tags:
+        - Task
+      summary: Assign a new task to an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                employeeId:
+                  type: integer
+                priority:
+                  type: string
+                dueDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Successfully created task and sent notification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      task:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          employeeId:
+                            type: integer
+                          priority:
+                            type: string
+                          dueDate:
+                            type: string
+                            format: date
+
+    get:
+      tags:
+        - Task
+      summary: Get all tasks
+      responses:
+        '200':
+          description: Successfully retrieved all tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  results:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      tasks:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            title:
+                              type: string
+                            description:
+                              type: string
+                            priority:
+                              type: string
+                            dueDate:
+                              type: string
+                              format: date
+
+  /task/{id}:
+    get:
+      tags:
+        - Task
+      summary: Get a specific task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved the task
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      task:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          priority:
+                            type: string
+                          dueDate:
+                            type: string
+                            format: date
+        '404':
+          description: Task not found
+
+    put:
+      tags:
+        - Task
+      summary: Update a specific task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                priority:
+                  type: string
+                status:
+                  type: string
+                dueDate:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Successfully updated the task
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      task:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          priority:
+                            type: string
+                          dueDate:
+                            type: string
+                            format: date
+
+    delete:
+      tags:
+        - Task
+      summary: Delete a specific task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Successfully deleted the task
+        '404':
+          description: Task not found
+
+  /task/{id}/complete:
+    put:
+      tags:
+        - Task
+      summary: Mark a specific task as completed
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully marked the task as completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      task:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          status:
+                            type: string
+                          completedAt:
+                            type: string
+                            format: date-time
+
+  /task/completion-status:
+    get:
+      tags:
+        - Task
+      summary: Get the completion status of tasks for an employee
+      parameters:
+        - name: employeeId
+          in: query
+          required: false
+          description: Filter tasks by employee ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved task completion status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      tasks:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            status:
+                              type: string
+  /performance:
+    post:
+      tags:
+        - Performance
+      summary: Create a performance evaluation for an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                taskId:
+                  type: integer
+                review:
+                  type: string
+                rating:
+                  type: number
+                  format: float
+                comments:
+                  type: string
+      responses:
+        '201':
+          description: Successfully created performance evaluation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      performance:
+                        type: object
+                        properties:
+                          employeeId:
+                            type: integer
+                          taskId:
+                            type: integer
+                          review:
+                            type: string
+                          rating:
+                            type: number
+                          comments:
+                            type: string
+        '400':
+          description: Performance evaluation can only be created for completed tasks
+        '404':
+          description: Task not found
+
+    get:
+      tags:
+        - Performance
+      summary: Get all performance evaluations
+      responses:
+        '200':
+          description: Successfully retrieved all performance evaluations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  results:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      evaluations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            employeeId:
+                              type: integer
+                            taskId:
+                              type: integer
+                            review:
+                              type: string
+                            rating:
+                              type: number
+                            comments:
+                              type: string
+
+  /performance/generate:
+    get:
+      tags:
+        - Performance
+      summary: Generate performance reports for all employees
+      responses:
+        '200':
+          description: Successfully generated performance reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      reports:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            employeeId:
+                              type: integer
+                            _avg:
+                              type: object
+                              properties:
+                                rating:
+                                  type: number
+                            _count:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+
+  /performance/{id}:
+    put:
+      tags:
+        - Performance
+      summary: Update a specific performance evaluation record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                review:
+                  type: string
+                rating:
+                  type: number
+                comments:
+                  type: string
+      responses:
+        '200':
+          description: Successfully updated the performance evaluation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      evaluation:
+                        type: object
+                        properties:
+                          review:
+                            type: string
+                          rating:
+                            type: number
+                          comments:
+                            type: string
+
+  /performance/employee/{employeeId}:
+    get:
+      tags:
+        - Performance
+      summary: Retrieve performance evaluations for a specific employee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved performance evaluations for the employee
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  results:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      evaluations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            employeeId:
+                              type: integer
+                            taskId:
+                              type: integer
+                            review:
+                              type: string
+                            rating:
+                              type: number
+                            comments:
+                              type: string
+
+  /performance/report/{employeeId}:
+    get:
+      tags:
+        - Performance
+      summary: Generate a performance report for a specific employee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully generated performance report for the employee
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      report:
+                        type: object
+                        properties:
+                          _avg:
+                            type: object
+                            properties:
+                              rating:
+                                type: number
+                          _count:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+
+  /report/attendance/generate:
+    post:
+      tags:
+        - Report
+      summary: Generate Attendance Report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                month:
+                  type: string
+                  example: 'October'
+                year:
+                  type: integer
+      responses:
+        '201':
+          description: Attendance report generated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      attendanceReport:
+                        type: object
+
+  /report/attendance:
+    get:
+      tags:
+        - Report
+      summary: Get Attendance Reports
+      parameters:
+        - name: employeeId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of attendance reports.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      attendanceReports:
+                        type: array
+                        items:
+                          type: object
+
+  /report/attendance/employee/{employeeId}:
+    get:
+      tags:
+        - Report
+      summary: Get Attendance Report by Employee ID
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Attendance report retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      attendanceReport:
+                        type: object
+        '404':
+          description: No attendance report found for this employee.
+
+  /report/payroll/generate:
+    post:
+      tags:
+        - Report
+      summary: Generate Payroll Report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                month:
+                  type: string
+                year:
+                  type: integer
+      responses:
+        '201':
+          description: Payroll report generated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payrollReport:
+                        type: object
+
+  /report/payroll:
+    get:
+      tags:
+        - Report
+      summary: Get Payroll Reports
+      parameters:
+        - name: employeeId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of payroll reports.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payrollReports:
+                        type: array
+                        items:
+                          type: object
+
+  /report/payroll/employee/{employeeId}:
+    get:
+      tags:
+        - Report
+      summary: Get Payroll Report by Employee ID
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payroll report retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payrollReport:
+                        type: object
+        '404':
+          description: No payroll report found for this employee.
+
+  /report/leave/generate:
+    post:
+      tags:
+        - Report
+      summary: Generate Leave Report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                month:
+                  type: string
+                year:
+                  type: integer
+      responses:
+        '201':
+          description: Leave report generated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      leaveReport:
+                        type: object
+
+  /report/leave:
+    get:
+      tags:
+        - Report
+      summary: Get Leave Reports
+      parameters:
+        - name: employeeId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of leave reports.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      leaveReports:
+                        type: array
+                        items:
+                          type: object
+
+  /report/leave/employee/{employeeId}:
+    get:
+      tags:
+        - Report
+      summary: Get Leave Report by Employee ID
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leave report retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      leaveReport:
+                        type: object
+        '404':
+          description: No leave report found for this employee.
+
+  /report/performance/generate:
+    post:
+      tags:
+        - Report
+      summary: Generate Performance Report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                month:
+                  type: string
+                year:
+                  type: integer
+      responses:
+        '201':
+          description: Performance report generated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      performanceReport:
+                        type: object
+
+  /report/performance:
+    get:
+      tags:
+        - Report
+      summary: Get Performance Reports
+      parameters:
+        - name: employeeId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of performance reports.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      performanceReports:
+                        type: array
+                        items:
+                          type: object
+
+  /report/performance/employee/{employeeId}:
+    get:
+      tags:
+        - Report
+      summary: Get Performance Report by Employee ID
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Performance report retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      performanceReport:
+                        type: object
+        '404':
+          description: No performance report found for this employee.
+  /report/dashboard:
+    get:
+      tags:
+        - Report
+      summary: Get Dashboard Overview
+      responses:
+        '200':
+          description: Dashboard overview retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      employeeCount:
+                        type: integer
+                      leaveCount:
+                        type: integer
+                      payrollSummary:
+                        type: object
+                      attendanceSummary:
+                        type: object
+
+  /job-openings:
+    post:
+      tags:
+        - Recruitment - Job Openings
+      summary: Create a new job opening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: 'Software Engineer'
+                description:
+                  type: string
+                  example: 'Responsible for developing and maintaining software applications.'
+                requirements:
+                  type: string
+                  example: "Bachelor's degree in Computer Science, 2+ years of experience"
+                departmentId:
+                  type: integer
+                  example: 1
+                location:
+                  type: string
+                  example: 'Dhaka'
+                employmentType:
+                  type: string
+                  example: 'Full-Time'
+                salaryRange:
+                  type: string
+                  example: '$40,000 - $60,000'
+                applicationDeadline:
+                  type: string
+                  format: date
+                  example: '2024-12-31'
+      responses:
+        201:
+          description: Successfully created a job opening
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      job:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          title:
+                            type: string
+                            example: 'Software Engineer'
+                          description:
+                            type: string
+                            example: 'Responsible for developing and maintaining software applications.'
+                          requirements:
+                            type: string
+                            example: "Bachelor's degree in Computer Science, 2+ years of experience"
+                          departmentId:
+                            type: integer
+                            example: 1
+                          location:
+                            type: string
+                            example: 'Dhaka'
+                          employmentType:
+                            type: string
+                            example: 'Full-Time'
+                          salaryRange:
+                            type: string
+                            example: '$40,000 - $60,000'
+                          applicationDeadline:
+                            type: string
+                            format: date
+                            example: '2024-12-31'
+                          status:
+                            type: string
+                            example: 'Open'
+
+    get:
+      tags:
+        - Recruitment - Job Openings
+      summary: Get all job openings
+      responses:
+        200:
+          description: Successfully retrieved job openings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    example: 10
+                  data:
+                    type: object
+                    properties:
+                      jobs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            title:
+                              type: string
+                              example: 'Software Engineer'
+                            description:
+                              type: string
+                              example: 'Responsible for developing and maintaining software applications.'
+                            requirements:
+                              type: string
+                              example: "Bachelor's degree in Computer Science, 2+ years of experience"
+                            departmentId:
+                              type: integer
+                              example: 1
+                            location:
+                              type: string
+                              example: 'Dhaka'
+                            employmentType:
+                              type: string
+                              example: 'Full-Time'
+                            salaryRange:
+                              type: string
+                              example: '$40,000 - $60,000'
+                            applicationDeadline:
+                              type: string
+                              format: date
+                              example: '2024-12-31'
+                            status:
+                              type: string
+                              example: 'Open'
+
+  /job-openings/{jobId}:
+    get:
+      tags:
+        - Recruitment - Job Openings
+      summary: Get a job opening by ID
+      parameters:
+        - in: path
+          name: jobId
+          schema:
+            type: integer
+          required: true
+          description: ID of the job opening
+      responses:
+        200:
+          description: Successfully retrieved the job opening
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      job:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          title:
+                            type: string
+                            example: 'Software Engineer'
+                          description:
+                            type: string
+                            example: 'Responsible for developing and maintaining software applications.'
+                          requirements:
+                            type: string
+                            example: "Bachelor's degree in Computer Science, 2+ years of experience"
+                          departmentId:
+                            type: integer
+                            example: 1
+                          location:
+                            type: string
+                            example: 'Dhaka'
+                          employmentType:
+                            type: string
+                            example: 'Full-Time'
+                          salaryRange:
+                            type: string
+                            example: '$40,000 - $60,000'
+                          applicationDeadline:
+                            type: string
+                            format: date
+                            example: '2024-12-31'
+                          status:
+                            type: string
+                            example: 'Open'
+
+    put:
+      tags:
+        - Recruitment - Job Openings
+      summary: Update a job opening
+      parameters:
+        - in: path
+          name: jobId
+          schema:
+            type: integer
+          required: true
+          description: ID of the job opening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: 'Senior Software Engineer'
+                description:
+                  type: string
+                  example: 'Lead the software development team.'
+                requirements:
+                  type: string
+                  example: "Bachelor's degree in Computer Science, 5+ years of experience"
+                location:
+                  type: string
+                  example: 'Dhaka'
+                salaryRange:
+                  type: string
+                  example: '$60,000 - $80,000'
+                status:
+                  type: string
+                  example: 'Open'
+      responses:
+        200:
+          description: Successfully updated the job opening
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      job:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          title:
+                            type: string
+                            example: 'Senior Software Engineer'
+                          description:
+                            type: string
+                            example: 'Lead the software development team.'
+                          requirements:
+                            type: string
+                            example: "Bachelor's degree in Computer Science, 5+ years of experience"
+                          location:
+                            type: string
+                            example: 'Dhaka'
+                          salaryRange:
+                            type: string
+                            example: '$60,000 - $80,000'
+                          status:
+                            type: string
+                            example: 'Open'
+
+    delete:
+      tags:
+        - Recruitment - Job Openings
+      summary: Delete a job opening
+      parameters:
+        - in: path
+          name: jobId
+          schema:
+            type: integer
+          required: true
+          description: ID of the job opening
+      responses:
+        204:
+          description: Job opening deleted successfully
+
+  /application/job/{jobId}/application:
+    post:
+      tags:
+        - Recruitment - Applications
+      summary: Submit a job application
+      description: 'Submit an application for a specific job opening.'
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          description: The ID of the job for which the application is being submitted.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                applicantName:
+                  type: string
+                  description: Name of the applicant.
+                applicantEmail:
+                  type: string
+                  description: Email of the applicant.
+                resume:
+                  type: string
+                  format: binary
+                  description: Resume file upload.
+                coverLetter:
+                  type: string
+                  format: binary
+                  description: Cover letter file upload.
+      responses:
+        201:
+          description: 'Application submitted successfully.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      application:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          applicantName:
+                            type: string
+                          applicantEmail:
+                            type: string
+                          resume:
+                            type: string
+                          coverLetter:
+                            type: string
+                          jobPositionId:
+                            type: integer
+                          createdAt:
+                            type: string
+                            format: date-time
+        400:
+          description: 'Invalid request.'
+        404:
+          description: 'Job not found.'
+
+    get:
+      tags:
+        - Recruitment - Applications
+      summary: Get all applications for a job
+      description: 'Retrieve all applications submitted for a specific job opening.'
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          description: The ID of the job for which to retrieve applications.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'A list of job applications.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        applicantName:
+                          type: string
+                        applicantEmail:
+                          type: string
+                        resume:
+                          type: string
+                        coverLetter:
+                          type: string
+                        jobPositionId:
+                          type: integer
+                        createdAt:
+                          type: string
+                          format: date-time
+        404:
+          description: 'Job not found.'
+
+  /application/{applicationId}:
+    get:
+      tags:
+        - Recruitment - Applications
+      summary: Get a job application by ID
+      description: 'Retrieve the details of a specific job application.'
+      parameters:
+        - in: path
+          name: applicationId
+          required: true
+          description: The ID of the job application to retrieve.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Job application details retrieved successfully.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      applicantName:
+                        type: string
+                      applicantEmail:
+                        type: string
+                      resume:
+                        type: string
+                      coverLetter:
+                        type: string
+                      jobPositionId:
+                        type: integer
+                      createdAt:
+                        type: string
+                        format: date-time
+        404:
+          description: 'Job application not found.'
+
+    put:
+      tags:
+        - Recruitment - Applications
+      summary: Update a job application
+      description: 'Update the status of a specific job application.'
+      parameters:
+        - in: path
+          name: applicationId
+          required: true
+          description: The ID of the job application to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [PENDING, SHORTLISTED, REJECTED]
+                  description: New status for the job application.
+      responses:
+        200:
+          description: 'Job application updated successfully.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      applicantName:
+                        type: string
+                      status:
+                        type: string
+        400:
+          description: 'Invalid request.'
+        404:
+          description: 'Job application not found.'
+
+    delete:
+      tags:
+        - Recruitment - Applications
+      summary: Delete a job application
+      description: 'Delete a specific job application by ID.'
+      parameters:
+        - in: path
+          name: applicationId
+          required: true
+          description: The ID of the job application to delete.
+          schema:
+            type: integer
+      responses:
+        204:
+          description: 'Job application deleted successfully.'
+        404:
+          description: 'Job application not found.'
+
+  /interview:
+    post:
+      tags:
+        - Recruitment - Interviews
+      summary: Create a new interview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                jobApplicationId:
+                  type: integer
+                  example: 1
+                hrId:
+                  type: integer
+                  example: 2
+                interviewDate:
+                  type: string
+                  format: date
+                  example: '2024-12-01'
+                interviewTime:
+                  type: string
+                  example: '10:00 AM'
+      responses:
+        201:
+          description: Successfully created a new interview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      interview:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          jobApplicationId:
+                            type: integer
+                            example: 1
+                          hrId:
+                            type: integer
+                            example: 2
+                          interviewDate:
+                            type: string
+                            format: date
+                            example: '2024-12-01'
+                          interviewTime:
+                            type: string
+                            example: '10:00 AM'
+
+    get:
+      tags:
+        - Recruitment - Interviews
+      summary: Get all interviews
+      responses:
+        200:
+          description: Successfully retrieved all interviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    example: 3
+                  data:
+                    type: object
+                    properties:
+                      interviews:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            jobApplicationId:
+                              type: integer
+                              example: 1
+                            hrId:
+                              type: integer
+                              example: 2
+                            interviewDate:
+                              type: string
+                              format: date
+                              example: '2024-12-01'
+                            interviewTime:
+                              type: string
+                              example: '10:00 AM'
+
+  /interview/{id}:
+    get:
+      tags:
+        - Recruitment - Interviews
+      summary: Get an interview by ID
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID of the interview
+      responses:
+        200:
+          description: Successfully retrieved the interview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      interview:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          jobApplicationId:
+                            type: integer
+                            example: 1
+                          hrId:
+                            type: integer
+                            example: 2
+                          interviewDate:
+                            type: string
+                            format: date
+                            example: '2024-12-01'
+                          interviewTime:
+                            type: string
+                            example: '10:00 AM'
+
+    patch:
+      tags:
+        - Recruitment - Interviews
+      summary: Update an interview
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID of the interview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                interviewDate:
+                  type: string
+                  format: date
+                  example: '2024-12-02'
+                interviewTime:
+                  type: string
+                  example: '11:00 AM'
+                feedback:
+                  type: string
+                  example: 'The candidate was very knowledgeable.'
+                result:
+                  type: string
+                  example: 'Accepted'
+                status:
+                  type: string
+                  example: 'Completed'
+      responses:
+        200:
+          description: Successfully updated the interview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: updated
+                  data:
+                    type: object
+                    properties:
+                      interview:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          jobApplicationId:
+                            type: integer
+                            example: 1
+                          hrId:
+                            type: integer
+                            example: 2
+                          interviewDate:
+                            type: string
+                            format: date
+                            example: '2024-12-02'
+                          interviewTime:
+                            type: string
+                            example: '11:00 AM'
+                          feedback:
+                            type: string
+                            example: 'The candidate was very knowledgeable.'
+                          result:
+                            type: string
+                            example: 'Accepted'
+                          status:
+                            type: string
+                            example: 'Completed'
+
+    delete:
+      tags:
+        - Recruitment - Interviews
+      summary: Delete an interview
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID of the interview
+      responses:
+        204:
+          description: Successfully deleted the interview
+
+  /interview/job-application/{jobApplicationId}:
+    get:
+      tags:
+        - Recruitment - Interviews
+      summary: Get interviews by Job Application ID
+      parameters:
+        - in: path
+          name: jobApplicationId
+          schema:
+            type: integer
+          required: true
+          description: ID of the job application
+      responses:
+        200:
+          description: Successfully retrieved interviews for the job application
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    example: 2
+                  data:
+                    type: object
+                    properties:
+                      interviews:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            jobApplicationId:
+                              type: integer
+                              example: 1
+                            hrId:
+                              type: integer
+                              example: 2
+                            interviewDate:
+                              type: string
+                              format: date
+                              example: '2024-12-01'
+                            interviewTime:
+                              type: string
+                              example: '10:00 AM'
+
+  /onboarding:
+    post:
+      tags:
+        - Recruitment - Onboarding
+      summary: Create an Onboarding Record
+      operationId: createOnboarding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                  description: ID of the employee.
+                jobApplicationId:
+                  type: integer
+                  description: ID of the job application.
+                designationId:
+                  type: integer
+                  description: ID of the designation.
+              required:
+                - employeeId
+                - jobApplicationId
+                - designationId
+      responses:
+        '201':
+          description: Onboarding record created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      onboarding:
+                        type: object
+                        description: The created onboarding record.
+        '400':
+          description: Bad request if required fields are missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+
+    get:
+      tags:
+        - Recruitment - Onboarding
+      summary: Get All Onboarding Records
+      operationId: getAllOnboardings
+      responses:
+        '200':
+          description: List of onboarding records retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    description: Number of onboarding records found.
+                  data:
+                    type: object
+                    properties:
+                      onboardings:
+                        type: array
+                        items:
+                          type: object
+                          description: An onboarding record.
+        '404':
+          description: No onboarding records found.
+
+  /onboarding/{id}:
+    get:
+      tags:
+        - Recruitment - Onboarding
+      summary: Get an Onboarding Record by ID
+      operationId: getOnboardingById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the onboarding record.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Onboarding record retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      onboarding:
+                        type: object
+                        description: The requested onboarding record.
+        '404':
+          description: No onboarding record found with that ID.
+
+    patch:
+      tags:
+        - Recruitment - Onboarding
+      summary: Update an Onboarding Record
+      operationId: updateOnboarding
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the onboarding record.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                designationId:
+                  type: integer
+                  description: Updated designation ID.
+                status:
+                  type: string
+                  description: Updated status.
+                completionDate:
+                  type: string
+                  format: date
+                  description: Completion date for onboarding.
+      responses:
+        '200':
+          description: Onboarding record updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      onboarding:
+                        type: object
+                        description: The updated onboarding record.
+        '404':
+          description: No onboarding record found with that ID.
+
+    delete:
+      tags:
+        - Recruitment - Onboarding
+      summary: Delete an Onboarding Record
+      operationId: deleteOnboarding
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the onboarding record.
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Onboarding record deleted successfully.
+        '404':
+          description: No onboarding record found with that ID.
