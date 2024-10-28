@@ -36,6 +36,10 @@ const onboardingRoute = require('./routes/recruitment/onboardingRoute');
 const reportRoute = require('./routes/reportRoute');
 const notificationRoute = require('./routes/notifications&alerts/notificationRoute');
 
+// settings & customization
+const companySettingsRoute = require('./routes/settingsAndCustomization/companySettingsRoute');
+const holidayRoute = require('./routes/settingsAndCustomization/holidayRoute');
+
 dotenv.config();
 
 const app = express();
@@ -76,6 +80,8 @@ app.use('/api/interview', interviewRoute);
 app.use('/api/onboarding', onboardingRoute);
 app.use('/api/report', reportRoute);
 app.use('/api/notification', notificationRoute);
+app.use('/api/settings', companySettingsRoute);
+app.use('/api/holiday', holidayRoute);
 
 //Path Not Found Middleware
 app.all('*', (req, res, next) => {

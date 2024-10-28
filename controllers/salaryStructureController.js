@@ -73,57 +73,56 @@ exports.createSalaryStructure = catchAsync(async (req, res, next) => {
 
 // Update an existing salary structure
 exports.updateSalaryStructure = catchAsync(async (req, res, next) => {
-    const { id } = req.params; // Get the ID from the route parameter
-    const {
-        basicSalaryId,
+  const { id } = req.params;
+  const {
+    basicSalaryId,
+    houseAllowance,
+    medicalAllowance,
+    otherAllowance,
+    overtimeHours,
+    overtimeRate,
+    deductions,
+    month,
+    year,
+  } = req.body;
+
+  try {
+    // Calculate the new gross salary before updating
+
+    const grossSalary = await calculateGrossSalary(
+      basicSalaryId,
+      houseAllowance,
+      medicalAllowance,
+      otherAllowance,
+      deductions,
+      overtimeHours,
+      overtimeRate
+    );
+
+    const updatedSalaryStructure = await prisma.salaryStructure.update({
+      where: { id: Number(id) },
+      data: {
         houseAllowance,
         medicalAllowance,
         otherAllowance,
         overtimeHours,
         overtimeRate,
         deductions,
+        grossSalary, // Update the gross salary as well
         month,
         year,
-    } = req.body;
+      },
+    });
 
-    try {
-        // Calculate the new gross salary before updating
-
-        const grossSalary = await calculateGrossSalary(
-            basicSalaryId,
-            houseAllowance,
-            medicalAllowance,
-            otherAllowance,
-            deductions,
-            overtimeHours,
-            overtimeRate
-          );
-
-        const updatedSalaryStructure = await prisma.salaryStructure.update({
-            where: { id: Number(id) },
-            data: {
-                houseAllowance,
-                medicalAllowance,
-                otherAllowance,
-                overtimeHours,
-                overtimeRate,
-                deductions,
-                grossSalary, // Update the gross salary as well
-                month,
-                year,
-            },
-        });
-
-        res.status(200).json({
-            status: 'success',
-            data: updatedSalaryStructure,
-        });
-    } catch (error) {
-        console.error(error); // Log the error to see the actual issue
-        return next(new AppError('Error updating salary structure', 500));
-    }
+    res.status(200).json({
+      status: 'success',
+      data: updatedSalaryStructure,
+    });
+  } catch (error) {
+    console.error(error); // Log the error to see the actual issue
+    return next(new AppError('Error updating salary structure', 500));
+  }
 });
-
 
 // Delete a salary structure
 exports.deleteSalaryStructure = catchAsync(async (req, res, next) => {

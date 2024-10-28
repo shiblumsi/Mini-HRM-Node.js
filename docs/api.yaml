@@ -6,33 +6,44 @@ info:
 servers:
   - url: http://localhost:8000/api # Local
 
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+        - bearerAuth: []
+
 tags:
+  - name: Authentication - User Management
+    description: Operations for user login, password reset, and password update.
+
   - name: Admin
     description: Admin operations
-  - name: auth
-    description: Admin operations
-  - name: department
-    description: Department operations
-  - name: designation
-    description: Designation operations
-  - name: employee
-    description: Employee operations
+
+  - name: User Profile
+    description: Operations for creating system-wide announcements and alerts for specific groups of employees.
+
+  - name: Employee
+    description: Employee operations for managing employee data, including retrieval, updates, document uploads, and deletions.
+  - name: Leave
+    description: Operations related to Leave management
   - name: Attendance
     description: Operations related to Attendance management
+
+  - name: Salary Structure
+    description: Salary Structure operations
   - name: Payroll
     description: Operations related to payroll management
   - name: Payroll Transactions
     description: Operations related to payroll Transactions
+
   - name: Task
     description: Operations related to Task management
   - name: Performance
     description: Operations related to Performance management
-  - name: Leave
-    description: Operations related to Leave management
-  - name: Leave Types
-    description: Operations related to Leave Types management
-  - name: Report
-    description: Endpoints for generating and retrieving reports
 
   - name: Recruitment - Job Openings
     description: Endpoints related to job openings in the recruitment process
@@ -43,7 +54,76 @@ tags:
   - name: Recruitment - Onboarding
     description: Endpoints related to onboarding new hires in the recruitment process
 
+  - name: Basic Salary
+    description: Basic Salary define for employee.
+
+  - name: Report
+    description: Endpoints for generating and retrieving reports
+
+  - name: Notifications & Alerts - System Announcement
+    description: Operations for creating system-wide announcements and alerts for specific groups of employees.
+
+  - name: Department
+    description: Department operations
+  - name: Designation
+    description: Designation operations
+  - name: Leave Types
+    description: Operations related to Leave Types management
+
+  - name: Settings - Holiday Management
+    description: Holiday management operations, including creating, retrieving, updating, and deleting holidays.
+  - name: Settings - Company Management
+    description: Operations related to managing company
+
 paths:
+  /role:
+    post:
+      tags:
+        - Admin
+      summary: Create a new User role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  example: 'Admin'
+      responses:
+        '201':
+          description: Role created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      role:
+                        type: string
+                        example: 'Admin'
+        '400':
+          description: Failed to create role
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: 'No role Created!'
   /admin/create/hr:
     post:
       tags:
@@ -76,7 +156,6 @@ paths:
     post:
       tags:
         - Admin
-        - employee
       summary: Create a new employee
       requestBody:
         required: true
@@ -105,110 +184,66 @@ paths:
         '400':
           description: Bad request
 
-  /login:
-    post:
-      tags:
-        - auth
-      summary: User login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
-      responses:
-        '200':
-          description: Login successful
-        '401':
-          description: Unauthorized
-
-  /department:
-    post:
-      tags:
-        - department
-      summary: Create a new department
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
-      responses:
-        '201':
-          description: Department created successfully
-        '400':
-          description: Bad request
-
-  /designation:
-    post:
-      tags:
-        - designation
-      summary: Create a new designation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                departmentId:
-                  type: integer
-      responses:
-        '201':
-          description: Designation created successfully
-        '400':
-          description: Bad request
-
   /employee:
     get:
       tags:
-        - employee
+        - Employee
       summary: Retrieve all employees
       responses:
         '200':
-          description: A list of employees
+          description: A list of employees retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      description: Employee details.
         '404':
-          description: Employees not found
+          description: Employees not found.
 
   /employee/{id}:
     get:
       tags:
-        - employee
+        - Employee
       summary: Get employee by ID
       parameters:
         - name: id
           in: path
           required: true
-          description: ID of the employee
+          description: ID of the employee.
           schema:
             type: integer
       responses:
         '200':
-          description: Employee details retrieved
+          description: Employee details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    description: Employee details.
         '404':
-          description: Employee not found
+          description: Employee not found.
 
     patch:
       tags:
-        - employee
+        - Employee
       summary: Update employee details
       parameters:
         - name: id
           in: path
           required: true
-          description: ID of the employee
+          description: ID of the employee.
           schema:
             type: integer
       requestBody:
@@ -220,45 +255,59 @@ paths:
               properties:
                 firstName:
                   type: string
+                  description: Employee's first name.
                 lastName:
                   type: string
+                  description: Employee's last name.
                 contact:
                   type: string
+                  description: Employee's contact number.
                 address:
                   type: string
+                  description: Employee's address.
       responses:
         '200':
-          description: Employee updated successfully
+          description: Employee updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    description: Updated employee details.
         '404':
-          description: Employee not found
+          description: Employee not found.
 
     delete:
       tags:
-        - employee
+        - Employee
       summary: Delete employee
       parameters:
         - name: id
           in: path
           required: true
-          description: ID of the employee
+          description: ID of the employee.
           schema:
             type: integer
       responses:
         '204':
-          description: Employee deleted successfully
+          description: Employee deleted successfully.
         '404':
-          description: Employee not found
+          description: Employee not found.
 
   /employee/{id}/upload-document:
     post:
       tags:
-        - employee
+        - Employee
       summary: Upload document for employee
       parameters:
         - name: id
           in: path
           required: true
-          description: ID of the employee
+          description: ID of the employee.
           schema:
             type: integer
       requestBody:
@@ -271,29 +320,42 @@ paths:
                 file:
                   type: string
                   format: binary
+                  description: The document file to upload.
       responses:
         '201':
-          description: Document uploaded successfully
+          description: Document uploaded successfully.
         '404':
-          description: Employee not found
+          description: Employee not found.
 
   /employee/{id}/document:
     get:
       tags:
-        - employee
+        - Employee
       summary: Get employee documents
       parameters:
         - name: id
           in: path
           required: true
-          description: ID of the employee
+          description: ID of the employee.
           schema:
             type: integer
       responses:
         '200':
-          description: Employee documents retrieved
+          description: Employee documents retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      description: Employee document details.
         '404':
-          description: Employee not found
+          description: Employee not found.
 
   /attendance/record:
     post:
@@ -309,16 +371,25 @@ paths:
               type: object
               properties:
                 employeeId:
-                  type: string
+                  type: integer
                   description: The ID of the employee.
                 checkIn:
                   type: string
                   format: date-time
-                  description: Check-in time.
-                date:
+                  description: Check-in time in "hh:mm AM/PM" format.
+                checkOut:
                   type: string
-                  format: date
-                  description: Attendance date.
+                  format: date-time
+                  description: Check-out time in "hh:mm AM/PM" format (optional).
+                month:
+                  type: string
+                  description: Month of the attendance record (e.g., "Jan", "Feb").
+                year:
+                  type: integer
+                  description: Year of the attendance record (e.g., 2024).
+                attendanceDate:
+                  type: string
+                  description: Specific date of the attendance record in "DD" format (default is "01").
       responses:
         '201':
           description: Attendance recorded successfully.
@@ -3325,3 +3396,1418 @@ paths:
           description: Onboarding record deleted successfully.
         '404':
           description: No onboarding record found with that ID.
+  /notification:
+    post:
+      tags:
+        - Notifications & Alerts - System Announcement
+      summary: Create a System Announcement
+      operationId: createSystemAnnouncement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: The title of the announcement.
+                message:
+                  type: string
+                  description: The content of the announcement message.
+                targetGroup:
+                  type: string
+                  description: The group targeted for the announcement (e.g., "ALL_EMPLOYEES", "HR", "DEPARTMENT").
+                departmentId:
+                  type: integer
+                  description: Department ID for department-specific announcements.
+                validUntil:
+                  type: string
+                  format: date
+                  description: The expiration date of the announcement.
+              required:
+                - title
+                - message
+                - targetGroup
+      responses:
+        '201':
+          description: System announcement created and notifications sent to specified recipients.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      announcement:
+                        type: object
+                        description: The created announcement details.
+                      employeesNotified:
+                        type: integer
+                        description: The number of employees notified.
+        '400':
+          description: Missing required fields or invalid target group.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: 'Title, message, and target group are required.'
+        '404':
+          description: No employees found for specified departmentId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: 'No employees found for department ID.'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication - User Management
+      summary: User Login
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: User's email address.
+                password:
+                  type: string
+                  description: User's password.
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Successful login.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  userRole:
+                    type: string
+                  email:
+                    type: string
+                  firstName:
+                    type: string
+                  token:
+                    type: string
+        '400':
+          description: Missing email or password.
+        '401':
+          description: Invalid credentials.
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Authentication - User Management
+      summary: Forgot Password
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: User's email address for password reset.
+              required:
+                - email
+      responses:
+        '200':
+          description: Password reset token sent to user's email.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: 'Token sent to email!'
+        '404':
+          description: User not found.
+
+  /auth/reset-password/{token}:
+    post:
+      tags:
+        - Authentication - User Management
+      summary: Reset Password
+      operationId: resetPassword
+      parameters:
+        - in: path
+          name: token
+          schema:
+            type: string
+          required: true
+          description: Password reset token provided to the user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: New password.
+                confirmPassword:
+                  type: string
+                  description: Confirm the new password.
+              required:
+                - password
+                - confirmPassword
+      responses:
+        '200':
+          description: Password successfully updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: 'Password updated successfully!'
+        '400':
+          description: Invalid or expired token, or passwords do not match.
+
+  /auth/update-password:
+    post:
+      tags:
+        - Authentication - User Management
+      summary: Update Password
+      operationId: updatePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                  description: Current user password.
+                newPassword:
+                  type: string
+                  description: New password.
+                againNewPassword:
+                  type: string
+                  description: Confirm the new password.
+              required:
+                - currentPassword
+                - newPassword
+                - againNewPassword
+      responses:
+        '200':
+          description: Password successfully updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: 'Password updated successfully!'
+        '400':
+          description: New passwords do not match.
+        '401':
+          description: Current password is incorrect.
+        '404':
+          description: User not found.
+
+  /department:
+    post:
+      tags:
+        - Department
+      summary: Create a new department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'Human Resources'
+                description:
+                  type: string
+                  example: 'Handles employee relations and recruitment.'
+      responses:
+        '201':
+          description: Department created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: 'Human Resources'
+                  description:
+                    type: string
+                    example: 'Handles employee relations and recruitment.'
+        '400':
+          description: Bad Request
+
+    get:
+      tags:
+        - Department
+      summary: Get all departments
+      responses:
+        '200':
+          description: List of all departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    name:
+                      type: string
+                      example: 'Human Resources'
+                    description:
+                      type: string
+                      example: 'Handles employee relations and recruitment.'
+
+  /department/{id}:
+    get:
+      tags:
+        - Department
+      summary: Get a department by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Department found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: 'Human Resources'
+                  description:
+                    type: string
+                    example: 'Handles employee relations and recruitment.'
+        '404':
+          description: Department not found
+
+    put:
+      tags:
+        - Department
+      summary: Update a department by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'Finance'
+                description:
+                  type: string
+                  example: 'Handles financial records and budgeting.'
+      responses:
+        '200':
+          description: Department updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: 'Finance'
+                  description:
+                    type: string
+                    example: 'Handles financial records and budgeting.'
+        '400':
+          description: Bad Request
+        '404':
+          description: Department not found
+
+    delete:
+      tags:
+        - Department
+      summary: Delete a department by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Department deleted successfully
+        '404':
+          description: Department not found
+
+  /designation:
+    post:
+      tags:
+        - Designation
+      summary: Create a new designation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: 'Software Engineer'
+                departmentId:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Designation created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: 'Software Engineer'
+                      departmentId:
+                        type: integer
+                        example: 1
+        '400':
+          description: Bad Request
+
+    get:
+      tags:
+        - Designation
+      summary: Get all designations
+      responses:
+        '200':
+          description: List of all designations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    example: 3
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: 'Software Engineer'
+                        departmentId:
+                          type: integer
+                          example: 1
+
+  /designation/{id}:
+    get:
+      tags:
+        - Designation
+      summary: Get a designation by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Designation found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: 'Software Engineer'
+                      departmentId:
+                        type: integer
+                        example: 1
+        '404':
+          description: Designation not found
+
+    put:
+      tags:
+        - Designation
+      summary: Update a designation by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: 'Senior Software Engineer'
+                departmentId:
+                  type: integer
+                  example: 2
+      responses:
+        '200':
+          description: Designation updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: 'Senior Software Engineer'
+                      departmentId:
+                        type: integer
+                        example: 2
+        '400':
+          description: Bad Request
+        '404':
+          description: Designation not found
+
+    delete:
+      tags:
+        - Designation
+      summary: Delete a designation by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Designation deleted successfully
+        '404':
+          description: Designation not found
+
+  /user/profile/update:
+    put:
+      tags:
+        - User Profile
+      summary: Update user profile information
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: 'John'
+                lastName:
+                  type: string
+                  example: 'Doe'
+                contact:
+                  type: string
+                  example: '+1234567890'
+                dob:
+                  type: string
+                  format: date
+                  example: '1990-01-01'
+                hireDate:
+                  type: string
+                  format: date
+                  example: '2020-01-01'
+                address:
+                  type: string
+                  example: '123 Main St, City, Country'
+                image:
+                  type: string
+                  format: binary
+                  description: Profile image file
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      firstName:
+                        type: string
+                        example: 'John'
+                      lastName:
+                        type: string
+                        example: 'Doe'
+                      contact:
+                        type: string
+                        example: '+1234567890'
+                      dob:
+                        type: string
+                        format: date
+                        example: '1990-01-01'
+                      hireDate:
+                        type: string
+                        format: date
+                        example: '2020-01-01'
+                      address:
+                        type: string
+                        example: '123 Main St, City, Country'
+                      image:
+                        type: string
+                        example: '/uploads/profile_images/john_doe.jpg'
+        '400':
+          description: Bad Request - No profile found to update or invalid data
+        '404':
+          description: User not found
+      
+
+  /salary-structure:
+    get:
+      tags:
+        - Salary Structure
+      summary: Retrieve all salary structures
+      responses:
+        '200':
+          description: List of salary structures
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    example: 1
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        employeeId:
+                          type: integer
+                          example: 101
+                        basicSalaryId:
+                          type: integer
+                          example: 201
+                        houseAllowance:
+                          type: number
+                          example: 5000
+                        medicalAllowance:
+                          type: number
+                          example: 2000
+                        otherAllowance:
+                          type: number
+                          example: 1500
+                        overtimeHours:
+                          type: number
+                          example: 10
+                        overtimeRate:
+                          type: number
+                          example: 100
+                        deductions:
+                          type: number
+                          example: 1000
+                        grossSalary:
+                          type: number
+                          example: 25000
+                        month:
+                          type: string
+                          example: 'August'
+                        year:
+                          type: integer
+                          example: 2024
+
+    post:
+      tags:
+        - Salary Structure
+      summary: Create a new salary structure
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                  example: 101
+                basicSalaryId:
+                  type: integer
+                  example: 201
+                houseAllowance:
+                  type: number
+                  example: 5000
+                medicalAllowance:
+                  type: number
+                  example: 2000
+                otherAllowance:
+                  type: number
+                  example: 1500
+                overtimeHours:
+                  type: number
+                  example: 10
+                overtimeRate:
+                  type: number
+                  example: 100
+                deductions:
+                  type: number
+                  example: 1000
+                month:
+                  type: string
+                  example: 'August'
+                year:
+                  type: integer
+                  example: 2024
+      responses:
+        '201':
+          description: Salary structure created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      employeeId:
+                        type: integer
+                        example: 101
+                      basicSalaryId:
+                        type: integer
+                        example: 201
+                      houseAllowance:
+                        type: number
+                        example: 5000
+                      medicalAllowance:
+                        type: number
+                        example: 2000
+                      otherAllowance:
+                        type: number
+                        example: 1500
+                      overtimeHours:
+                        type: number
+                        example: 10
+                      overtimeRate:
+                        type: number
+                        example: 100
+                      deductions:
+                        type: number
+                        example: 1000
+                      grossSalary:
+                        type: number
+                        example: 25000
+                      month:
+                        type: string
+                        example: 'August'
+                      year:
+                        type: integer
+                        example: 2024
+        '400':
+          description: Salary structure for this employee and month already exists
+
+  /salary-structure/{id}:
+    put:
+      tags:
+        - Salary Structure
+      summary: Update an existing salary structure by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                basicSalaryId:
+                  type: integer
+                  example: 201
+                houseAllowance:
+                  type: number
+                  example: 5500
+                medicalAllowance:
+                  type: number
+                  example: 2200
+                otherAllowance:
+                  type: number
+                  example: 1700
+                overtimeHours:
+                  type: number
+                  example: 15
+                overtimeRate:
+                  type: number
+                  example: 120
+                deductions:
+                  type: number
+                  example: 800
+                month:
+                  type: string
+                  example: 'September'
+                year:
+                  type: integer
+                  example: 2024
+      responses:
+        '200':
+          description: Salary structure updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      basicSalaryId:
+                        type: integer
+                        example: 201
+                      houseAllowance:
+                        type: number
+                        example: 5500
+                      medicalAllowance:
+                        type: number
+                        example: 2200
+                      otherAllowance:
+                        type: number
+                        example: 1700
+                      overtimeHours:
+                        type: number
+                        example: 15
+                      overtimeRate:
+                        type: number
+                        example: 120
+                      deductions:
+                        type: number
+                        example: 800
+                      grossSalary:
+                        type: number
+                        example: 26000
+                      month:
+                        type: string
+                        example: 'September'
+                      year:
+                        type: integer
+                        example: 2024
+        '400':
+          description: Invalid input
+        '404':
+          description: Salary structure not found
+
+    delete:
+      tags:
+        - Salary Structure
+      summary: Delete a salary structure by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Salary structure deleted successfully
+        '404':
+          description: Salary structure not found
+
+  /settings/company:
+    get:
+      tags:
+        - Settings - Company Management
+      summary: Get company settings
+      responses:
+        '200':
+          description: Retrieve company settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: 'Tech Corp'
+                  address:
+                    type: string
+                    example: '123 Main St, Tech City'
+                  contactInfo:
+                    type: string
+                    example: '+1234567890'
+                  timezone:
+                    type: string
+                    example: 'GMT+6'
+                  workingHoursStart:
+                    type: string
+                    example: '09:00 AM'
+                  workingHoursEnd:
+                    type: string
+                    example: '05:00 PM'
+        '404':
+          description: Company settings not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Company settings not found'
+
+    put:
+      tags:
+        - Settings - Company Management
+      summary: Update company settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'Tech Corp'
+                address:
+                  type: string
+                  example: '123 Main St, Tech City'
+                contactInfo:
+                  type: string
+                  example: '+1234567890'
+                timezone:
+                  type: string
+                  example: 'GMT+6'
+                workingHoursStart:
+                  type: string
+                  example: '09:00 AM'
+                workingHoursEnd:
+                  type: string
+                  example: '05:00 PM'
+      responses:
+        '200':
+          description: Company settings updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Company settings updated successfully'
+                  updatedSettings:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 'Tech Corp'
+                      address:
+                        type: string
+                        example: '123 Main St, Tech City'
+                      contactInfo:
+                        type: string
+                        example: '+1234567890'
+                      timezone:
+                        type: string
+                        example: 'GMT+6'
+                      workingHoursStart:
+                        type: string
+                        example: '09:00 AM'
+                      workingHoursEnd:
+                        type: string
+                        example: '05:00 PM'
+        '404':
+          description: Company settings not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Company settings not found'
+
+  /holiday:
+    get:
+      summary: Get all holidays with optional filters for month and year
+      tags:
+        - Settings - Holiday Management
+      parameters:
+        - in: query
+          name: month
+          required: false
+          schema:
+            type: integer
+            example: 12
+          description: Filter holidays by month.
+        - in: query
+          name: year
+          required: false
+          schema:
+            type: integer
+            example: 2024
+          description: Filter holidays by year.
+      responses:
+        200:
+          description: List of holidays.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    description: Number of holidays returned.
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        date:
+                          type: integer
+                        month:
+                          type: integer
+                        year:
+                          type: integer
+                        name:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+    post:
+      summary: Create a new holiday
+      tags:
+        - Settings - Holiday Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'New Year'
+                date:
+                  type: integer
+                  example: 1
+                month:
+                  type: integer
+                  example: 1
+                year:
+                  type: integer
+                  example: 2024
+      responses:
+        201:
+          description: Holiday created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Holiday created successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      date:
+                        type: integer
+                      month:
+                        type: integer
+                      year:
+                        type: integer
+                      name:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+
+  /holiday/{holidayId}:
+    put:
+      summary: Update an existing holiday
+      tags:
+        - Settings - Holiday Management
+      parameters:
+        - in: path
+          name: holidayId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the holiday to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'Updated Holiday'
+                date:
+                  type: integer
+                  example: 25
+                month:
+                  type: integer
+                  example: 12
+                year:
+                  type: integer
+                  example: 2024
+      responses:
+        200:
+          description: Holiday updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Holiday updated successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      date:
+                        type: integer
+                      month:
+                        type: integer
+                      year:
+                        type: integer
+                      name:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+
+    delete:
+      summary: Delete a holiday
+      tags:
+        - Settings - Holiday Management
+      parameters:
+        - in: path
+          name: holidayId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the holiday to delete.
+      responses:
+        200:
+          description: Holiday deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Holiday deleted successfully
+
+  /basic-salary:
+    post:
+      tags:
+        - Basic Salary
+      summary: Create Basic Salary
+      description: Create a new basic salary for an employee.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: integer
+                  description: The ID of the employee.
+                amount:
+                  type: number
+                  format: float
+                  description: The amount of the basic salary.
+      responses:
+        '201':
+          description: Basic salary created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      salary:
+                        type: object
+                        description: The newly created salary record.
+        '400':
+          description: Basic salary already exists for this employee.
+
+    get:
+      tags:
+        - Basic Salary
+      summary: Get All Basic Salaries
+      description: Retrieve a list of all basic salaries.
+      responses:
+        '200':
+          description: List of basic salaries retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      salaries:
+                        type: array
+                        items:
+                          type: object
+                          description: Basic salary details.
+
+  /basic-salary/{id}:
+    get:
+      tags:
+        - Basic Salary
+      summary: Get Basic Salary by ID
+      description: Retrieve a specific basic salary by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the basic salary.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Basic salary retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      salary:
+                        type: object
+                        description: Basic salary details.
+        '404':
+          description: Basic salary not found.
+
+    put:
+      tags:
+        - Basic Salary
+      summary: Update Basic Salary
+      description: Update an existing basic salary by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the basic salary to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  format: float
+                  description: The new amount of the basic salary.
+      responses:
+        '200':
+          description: Basic salary updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      salary:
+                        type: object
+                        description: Updated basic salary details.
+        '404':
+          description: Basic salary not found.
+
+    delete:
+      tags:
+        - Basic Salary
+      summary: Delete Basic Salary
+      description: Delete a basic salary by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the basic salary to delete.
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Basic salary deleted successfully.
+

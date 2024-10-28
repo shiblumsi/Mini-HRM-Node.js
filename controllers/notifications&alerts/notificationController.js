@@ -18,8 +18,8 @@ exports.createSystemAnnouncement = catchAsync(async (req, res, next) => {
       title,
       message,
       targetGroup,
-      validUntil: validUntil ? new Date(validUntil) : null, // Convert to Date object if provided
-      departmentId: departmentId || null, // Use null if not provided
+      validUntil: validUntil ? new Date(validUntil) : null, 
+      departmentId: departmentId || null, 
     },
   });
 
@@ -29,7 +29,7 @@ exports.createSystemAnnouncement = catchAsync(async (req, res, next) => {
   if (targetGroup === 'ALL_EMPLOYEES') {
     employees = await prisma.employee.findMany();
   } else if (targetGroup === 'HR') {
-    employees = await prisma.hr.findMany(); // Get all HR personnel
+    employees = await prisma.hr.findMany(); 
   } else if (targetGroup === 'DEPARTMENT') {
     if (!departmentId) {
       return next(new AppError('Please specify a departmentId for department-specific announcements.', 400));

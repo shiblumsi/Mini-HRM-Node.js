@@ -121,20 +121,20 @@ model Employee {
 }
 
 model Attendance {
-  id             Int          @id @default(autoincrement())   // Unique identifier for each attendance record
-  employee       Employee     @relation(fields: [employeeId], references: [id]) // Relationship to the Employee model
-  employeeId     Int          // Foreign key referencing the Employee's ID
-  checkIn        DateTime       // Timestamp for when the employee clocks in
-  checkOut       DateTime?      // Timestamp for when the employee clocks out (optional)
-  overtime       Float?       // Number of overtime hours worked (optional)
+  id             Int          @id @default(autoincrement())   
+  employee       Employee     @relation(fields: [employeeId], references: [id]) 
+  employeeId     Int          
+  checkIn        DateTime       
+  checkOut       DateTime?      
+  overtime       Float?       
   month           String
   year            Int?
-  attendanceDate String        @default("01") // Set a default value
+  attendanceDate String        @default("01") 
   workHoure      Float?
-  lateArrival    Boolean      @default(false) // Indicates if the employee arrived late
+  lateArrival    Boolean      @default(false) 
   isPresent      Boolean      @default(true)
   isLate         Boolean      @default(false)
-  createdAt      DateTime     @default(now()) // Record creation timestamp
+  createdAt      DateTime     @default(now()) 
   updatedAt      DateTime     @updatedAt
 
   @@unique([employeeId, month, year, attendanceDate])
@@ -463,9 +463,9 @@ model PayrollReport {
   id             Int             @id @default(autoincrement())
   employee       Employee        @relation(fields: [employeeId], references: [id])
   employeeId     Int
-  totalPayable   Float           // Total amount payable within the reporting period
-  month          Int          // Payroll report month
-  year           Int             // Payroll report year
+  totalPayable   Float          
+  month          Int          
+  year           Int             
   status         PayrollStatus   @default(PAID)
   generatedAt    DateTime        @default(now())
 }
@@ -478,8 +478,8 @@ model LeaveReport {
   leaveType      LeaveType       @relation(fields: [leaveTypeId], references: [id])
   leaveTypeId    Int
   status         LeaveStatus     @default(PENDING) // Status of leave (pending, approved, etc.)
-  month          String          // leave report month
-  year           Int             // leave report year
+  month          String          
+  year           Int            
   generatedAt    DateTime        @default(now())
 }
 
@@ -487,11 +487,11 @@ model PerformanceReport {
   id             Int             @id @default(autoincrement())
   employee       Employee        @relation(fields: [employeeId], references: [id])
   employeeId     Int
-  rating         Int             // Performance rating (scale of 1-10)
-  taskCompleted  Int             // Number of tasks completed in the period
-  feedback       String?         // Performance feedback
-  month          Int          // Performance report month
-  year           Int             // Performance report year
+  rating         Int             
+  taskCompleted  Int             
+  feedback       String?         
+  month          Int         
+  year           Int             
   generatedAt    DateTime        @default(now())
 }
 enum ReportType {
@@ -646,23 +646,40 @@ enum DocumentAction {
 }
 
 model CompanySettings {
-  id               Int              @id @default(autoincrement())
-  companyName      String           // Name of the company
-  address          String           // Company address
-  contactInfo      String           // Contact information (phone, email, etc.)
-  timezone         String           // Timezone of the company (e.g., "Asia/Dhaka")
-  workingHours     String           // Working hours (e.g., "9 AM - 5 PM")
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt // Track the last update time
+  id          Int     @id @default(autoincrement())
+  name        String
+  address     String
+  contactInfo String
+  timezone    String?
+  workingHoursStart String? // Format '09:00 AM'
+  workingHoursEnd   String? // Format '06:00 PM'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 
+
 model Holiday {
-  id               Int              @id @default(autoincrement())
-  date             DateTime         // Date of the holiday
-  name             String           // Name of the holiday (e.g., Eid, National Day)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt // Track the last update time
+  id        Int      @id @default(autoincrement())
+  date      Int
+  month     Int
+  year      Int
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([date, month, year])
+}
+
+
+model PayrollComponent {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  type        String   
+  amount      Float?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 

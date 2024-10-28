@@ -4,35 +4,35 @@ const AppError = require('../utils/appError');
 const moment = require('moment');
 
 // // Get Attendance by ID
-// exports.getAttendanceById = catchAsync(async (req, res, next) => {
-//   const { attId } = req.params;
+exports.getAttendanceById = catchAsync(async (req, res, next) => {
+  const { attId } = req.params;
 
-//   console.log('Attendance ID:', attId); // Debug log
+  console.log('Attendance ID:', attId);
 
-//   try {
-//       const attendance = await prisma.attendance.findUnique({
-//           where: { id: Number(attId) }, // Ensure you're converting attId to a number
-//       });
+  try {
+      const attendance = await prisma.attendance.findUnique({
+          where: { id: Number(attId) },
+      });
 
-//       if (!attendance) {
-//           return next(new AppError('No attendance record found with that ID.', 404));
-//       }
+      if (!attendance) {
+          return next(new AppError('No attendance record found with that ID.', 404));
+      }
 
-//       // Format and respond with the attendance record
-//       const formattedAttendance = {
-//           ...attendance,
-//           checkIn: attendance.checkIn ? moment(attendance.checkIn).format('hh:mm A') : null,
-//           checkOut: attendance.checkOut ? moment(attendance.checkOut).format('hh:mm A') : null,
-//       };
+      // Format and respond with the attendance record
+      const formattedAttendance = {
+          ...attendance,
+          checkIn: attendance.checkIn ? moment(attendance.checkIn).format('hh:mm A') : null,
+          checkOut: attendance.checkOut ? moment(attendance.checkOut).format('hh:mm A') : null,
+      };
 
-//       res.status(200).json({
-//           status: 'success',
-//           data: formattedAttendance,
-//       });
-//   } catch (error) {
-//       return next(new AppError('Database query failed.', 500));
-//   }
-// });
+      res.status(200).json({
+          status: 'success',
+          data: formattedAttendance,
+      });
+  } catch (error) {
+      return next(new AppError('Database query failed.', 500));
+  }
+});
 
 // Record daily attendance for an employee
 exports.recordAttendance = catchAsync(async (req, res, next) => {
@@ -48,9 +48,9 @@ exports.recordAttendance = catchAsync(async (req, res, next) => {
   }
 
   const currentDate = moment();
-  const attendanceDay = attendanceDate || currentDate.format('DD'); // Get current day if not provided
-  const attendanceMonth = month || currentDate.format('MMM'); // Get current month if not provided
-  const attendanceYear = year || currentDate.year(); // Get current year if not provided
+  const attendanceDay = attendanceDate || currentDate.format('DD'); 
+  const attendanceMonth = month || currentDate.format('MMM'); 
+  const attendanceYear = year || currentDate.year(); 
 
   const fullDate = `${attendanceYear}-${currentDate.format(
     'MM'
