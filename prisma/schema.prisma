@@ -17,12 +17,15 @@ model Admin {
   id            Int       @id @default(autoincrement())
   email         String    @unique
   password      String
+  role          Role      @relation(fields: [roleId], references: [id])
+  roleId        Int
 }
 
 model Role {
   id            Int       @id @default(autoincrement())
   role          String    @unique
   user          User[]
+  admin        Admin[]
 }
 model User {
   id            Int       @id @default(autoincrement())
@@ -62,6 +65,7 @@ model Department {
   jobPosition   JobPosition[]
   dashboardMetrics  DashboardMetrics[]
   designation    Designation[]
+  Onboarding     Onboarding[]
   systemAnnouncement  SystemAnnouncement[]
 }
 
@@ -107,7 +111,6 @@ model Employee {
   payroll       Payroll[]
   task          Task[]
   performance   Performance[]
-  onboarding    Onboarding[]
   attendanceReport  AttendanceReport[]
   payrollReport PayrollReport[]
   leaveReport   LeaveReport[]
@@ -169,6 +172,7 @@ enum leaveStatus {
   PENDING
   APPROVED
   REJECTED
+  CANCELED
 }
 model Leave {
   id               Int          @id @default(autoincrement())
@@ -177,7 +181,7 @@ model Leave {
   type             LeaveType    @relation(fields: [leaveTypeId], references: [id])
   leaveTypeId      Int
   startDate        DateTime
-  endDate          DateTime
+  endDate          DateTime?
   totalDays        Int
   status           leaveStatus  @default(PENDING)    // pending, approved, rejected
   approvedBy       String?
@@ -221,7 +225,7 @@ model SalaryStructure {
   overtimeRate     Float?
   deductions       Float? 
   grossSalary      Float 
-  month            Int 
+  month            String 
   year             Int 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -235,7 +239,7 @@ model Payroll {
   id                 Int                @id @default(autoincrement())
   employee           Employee           @relation(fields: [employeeId], references: [id])
   employeeId         Int
-  month              Int            
+  month              String            
   year               Int              
   salaryStructure    SalaryStructure     @relation(fields: [salaryStructureId], references: [id])
   salaryStructureId  Int
@@ -368,10 +372,10 @@ model Interview {
 
 model Onboarding {
   id              Int              @id @default(autoincrement())
-  employee        Employee         @relation(fields: [employeeId], references: [id])
-  employeeId      Int
   jobApplication  JobApplication   @relation(fields: [jobApplicationId], references: [id])
   jobApplicationId Int
+  department      Department        @relation(fields: [departmentId], references: [id])
+  departmentId    Int
   designation     Designation      @relation(fields: [designationId], references: [id])
   designationId   Int
   onboardingDate  DateTime         @default(now())  // Date when onboarding starts
@@ -662,7 +666,7 @@ model CompanySettings {
 model Holiday {
   id        Int      @id @default(autoincrement())
   date      Int
-  month     Int
+  month     String
   year      Int
   name      String
   createdAt DateTime @default(now())

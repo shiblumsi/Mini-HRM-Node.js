@@ -1,11 +1,9 @@
-const express = require('express')
-const roleController = require('../../controllers/admin/roleController')
+const express = require('express');
+const roleController = require('../../controllers/admin/roleController');
+const { adminOnly } = require('../../middlewares/permissionMiddlewar');
 
+const router = express.Router();
 
-const router = express.Router()
+router.post('/', adminOnly, roleController.createRole);
 
-
-router.post('/',roleController.createRole)
-
-
-module.exports = router 
+module.exports = router;

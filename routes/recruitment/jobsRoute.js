@@ -1,7 +1,9 @@
 const express = require('express');
 const jobController = require('../../controllers/recruitment/jobsController');
+const { adminAndHrOnly } = require('../../middlewares/permissionMiddlewar');
 const router = express.Router();
 
+router.use(adminAndHrOnly);
 router
   .route('/')
   .post(jobController.createJobOpening)

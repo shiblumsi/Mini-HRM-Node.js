@@ -14,7 +14,7 @@ components:
       bearerFormat: JWT
 
 security:
-        - bearerAuth: []
+  - bearerAuth: []
 
 tags:
   - name: Authentication - User Management
@@ -22,6 +22,9 @@ tags:
 
   - name: Admin
     description: Admin operations
+
+  - name: Employee-Self
+    description: Operations related to employee self-service
 
   - name: User Profile
     description: Operations for creating system-wide announcements and alerts for specific groups of employees.
@@ -76,6 +79,77 @@ tags:
     description: Operations related to managing company
 
 paths:
+  /admin/login:
+    post:
+      summary: Admin login
+      operationId: adminLogin
+      tags:
+        - Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: admin@gmail.com
+                password:
+                  type: string
+                  example: 1
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  data:
+                    type: object
+                    properties:
+                      adminId:
+                        type: integer
+                        example: 1
+                      email:
+                        type: string
+                        example: admin@gmail.com
+                      role:
+                        type: string
+                        example: ADMIN
+        '400':
+          description: Bad Request - Missing email or password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Please provide email and password
+        '401':
+          description: Unauthorized - Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Invalid credentials or not an admin
   /role:
     post:
       tags:
@@ -124,7 +198,7 @@ paths:
                   message:
                     type: string
                     example: 'No role Created!'
-  /admin/create/hr:
+  /user/create/hr:
     post:
       tags:
         - Admin
@@ -152,7 +226,7 @@ paths:
         '400':
           description: Bad request
 
-  /admin/create/employee:
+  /user/create/employee:
     post:
       tags:
         - Admin
@@ -612,8 +686,6 @@ paths:
             schema:
               type: object
               properties:
-                employeeId:
-                  type: integer
                 leaveTypeId:
                   type: integer
                 startDate:
@@ -3224,7 +3296,7 @@ paths:
             schema:
               type: object
               properties:
-                employeeId:
+                departmentId:
                   type: integer
                   description: ID of the employee.
                 jobApplicationId:
@@ -3492,9 +3564,11 @@ paths:
                 email:
                   type: string
                   description: User's email address.
+                  example: shiblu.msi@gmail.com
                 password:
                   type: string
                   description: User's password.
+                  example: 1
               required:
                 - email
                 - password
@@ -3985,7 +4059,7 @@ paths:
         '404':
           description: Designation not found
 
-  /user/profile/update:
+  /user-profile/update:
     put:
       tags:
         - User Profile
@@ -4065,7 +4139,6 @@ paths:
           description: Bad Request - No profile found to update or invalid data
         '404':
           description: User not found
-      
 
   /salary-structure:
     get:
@@ -4141,10 +4214,7 @@ paths:
               properties:
                 employeeId:
                   type: integer
-                  example: 101
-                basicSalaryId:
-                  type: integer
-                  example: 201
+                  example: 1
                 houseAllowance:
                   type: number
                   example: 5000
@@ -4154,18 +4224,12 @@ paths:
                 otherAllowance:
                   type: number
                   example: 1500
-                overtimeHours:
-                  type: number
-                  example: 10
                 overtimeRate:
                   type: number
-                  example: 100
-                deductions:
-                  type: number
-                  example: 1000
+                  example: 500
                 month:
                   type: string
-                  example: 'August'
+                  example: '09'
                 year:
                   type: integer
                   example: 2024
@@ -4658,7 +4722,7 @@ paths:
                     type: string
                     example: Holiday deleted successfully
 
-  /basic-salary:
+  /salary:
     post:
       tags:
         - Basic Salary
@@ -4721,7 +4785,7 @@ paths:
                           type: object
                           description: Basic salary details.
 
-  /basic-salary/{id}:
+  /salary/{id}:
     get:
       tags:
         - Basic Salary
@@ -4811,3 +4875,521 @@ paths:
         '204':
           description: Basic salary deleted successfully.
 
+  /self/view-attendance:
+    get:
+      tags:
+        - Employee-Self
+      summary: View attendance records
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            example: '09'
+          required: false
+          description: Month for filtering  records (MM format).
+        - in: query
+          name: year
+          schema:
+            type: integer
+            example: 2024
+          required: false
+          description: Year for filtering  records (YYYY format).
+      responses:
+        '200':
+          description: Attendance records retrieved successfully
+
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attendance:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        status:
+                          type: string
+                          enum: [present, absent, leave]
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/view-attendance-summary:
+    get:
+      tags:
+        - Employee-Self
+      summary: View monthly attendance summary
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            example: '09'
+          required: false
+          description: Month for filtering  records (MM format).
+        - in: query
+          name: year
+          schema:
+            type: integer
+            example: 2024
+          required: false
+          description: Year for filtering  records (YYYY format).
+      responses:
+        '200':
+          description: Monthly attendance summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  month:
+                    type: string
+                  year:
+                    type: integer
+                  totalPresent:
+                    type: integer
+                  totalAbsent:
+                    type: integer
+                  totalLeave:
+                    type: integer
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/apply-leave:
+    post:
+      tags:
+        - Employee-Self
+      summary: Apply for leave
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                leaveType:
+                  type: string
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Leave applied successfully
+        '400':
+          description: Invalid leave application
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/view-leave-status:
+    get:
+      tags:
+        - Employee-Self
+      summary: View leave status
+      responses:
+        '200':
+          description: Leave status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leaveStatus:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        leaveId:
+                          type: string
+                        status:
+                          type: string
+                          enum: [pending, approved, rejected]
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/cancle-leave:
+    put:
+      tags:
+        - Employee-Self
+      summary: Cancel leave
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                leaveId:
+                  type: string
+      responses:
+        '200':
+          description: Leave canceled successfully
+        '404':
+          description: Leave not found
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/remaining-leaves:
+    get:
+      tags:
+        - Employee-Self
+      summary: Get remaining leaves
+      responses:
+        '200':
+          description: Remaining leaves retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remainingLeaves:
+                    type: integer
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/profile:
+    get:
+      tags:
+        - Employee-Self
+      summary: View profile
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+    patch:
+      tags:
+        - Employee-Self
+      summary: Update profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+        '400':
+          description: Invalid profile data
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/profile/picture:
+    patch:
+      tags:
+        - Employee-Self
+      summary: Update profile picture
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Profile picture updated successfully
+        '400':
+          description: Invalid image upload
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/view-task:
+    get:
+      tags:
+        - Employee-Self
+      summary: View assigned tasks
+      responses:
+        '200':
+          description: Assigned tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    taskId:
+                      type: string
+                    taskName:
+                      type: string
+                    status:
+                      type: string
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/submit-task:
+    patch:
+      tags:
+        - Employee-Self
+      summary: Submit task update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                updates:
+                  type: string
+      responses:
+        '200':
+          description: Task updated successfully
+        '404':
+          description: Task not found
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/task/{taskId}/performance:
+    get:
+      tags:
+        - Employee-Self
+      summary: View performance reports for a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: ID of the task
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Performance reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                  performanceRating:
+                    type: number
+        '404':
+          description: Task not found
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/view-paySlip:
+    get:
+      tags:
+        - Employee-Self
+      summary: View pay slip
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            example: '09'
+          required: false
+          description: Month for filtering  records (MM format).
+        - in: query
+          name: year
+          schema:
+            type: integer
+            example: 2024
+          required: false
+          description: Year for filtering  records (YYYY format).
+      responses:
+        '200':
+          description: Pay slip retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paySlipId:
+                    type: string
+                  amount:
+                    type: number
+                  date:
+                    type: string
+                    format: date
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/view-salaryDetails:
+    get:
+      tags:
+        - Employee-Self
+      summary: View salary details
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            example: '09'
+          required: false
+          description: Month for filtering  records (MM format).
+        - in: query
+          name: year
+          schema:
+            type: integer
+            example: 2024
+          required: false
+          description: Year for filtering  records (YYYY format).
+      responses:
+        '200':
+          description: Salary details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  salary:
+                    type: number
+                  deductions:
+                    type: number
+                  netSalary:
+                    type: number
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/view-notifications:
+    get:
+      tags:
+        - Employee-Self
+      summary: View notifications
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    notificationId:
+                      type: string
+                    message:
+                      type: string
+                    date:
+                      type: string
+                      format: date
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/view-systemAnnouncements:
+    get:
+      tags:
+        - Employee-Self
+      summary: View system announcements
+      responses:
+        '200':
+          description: System announcements retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    announcementId:
+                      type: string
+                    title:
+                      type: string
+                    date:
+                      type: string
+                      format: date
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error
+
+  /self/view-holidayCalendar:
+    get:
+      tags:
+        - Employee-Self
+      summary: View holiday calendar
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            example: '09'
+          required: false
+          description: Month for filtering  records (MM format).
+        - in: query
+          name: year
+          schema:
+            type: integer
+            example: 2024
+          required: false
+          description: Year for filtering  records (YYYY format).
+      responses:
+        '200':
+          description: Holiday calendar retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                    name:
+                      type: string
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Internal server error

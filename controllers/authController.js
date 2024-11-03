@@ -28,9 +28,13 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Password not matched!', 401));
   }
 
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIREIN,
-  });
+  const token = jwt.sign(
+    { id: user.id, userType: 'USER' },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIREIN,
+    }
+  );
   console.log(user.role.role);
 
   const userData = user.hr ? user.hr : user.employee;

@@ -1,6 +1,10 @@
 const express = require('express');
 const performanceController = require('../../controllers/task&performance/performanceController');
+const { adminAndHrOnly } = require('../../middlewares/permissionMiddlewar');
+
 const router = express.Router();
+
+router.use(adminAndHrOnly);
 
 // Performance evaluation routes
 router

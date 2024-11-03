@@ -16,20 +16,35 @@ exports.getAllSalaryStructures = catchAsync(async (req, res, next) => {
 exports.createSalaryStructure = catchAsync(async (req, res, next) => {
   const {
     employeeId,
-    basicSalaryId,
     houseAllowance,
     medicalAllowance,
     otherAllowance,
-    overtimeHours,
     overtimeRate,
-    deductions,
     month,
     year,
   } = req.body;
 
+  const basicSalary = await prisma.basicSalary.findUnique({
+    where: {
+      id: employeeId * 1,
+    },
+  });
+  const attendanceReport = await prisma.monthlyAttendanceReport.findFirst({
+    where: {
+      month,
+      employeeId: Number(employeeId),
+      year: Number(year),
+    },
+  });
+  const amountPerDay = basicSalary.amount / attendanceReport.totalWorkingDays;
+  const absentDay = attendanceReport.daysAbsent - attendanceReport.leaveDays;
+  let deductions = amountPerDay * absentDay;
+  let isLate = attendanceReport.lateArrivals * 300;
+  deductions = deductions + isLate;
+  let overtimeHours = attendanceReport.overtimeHours;
   try {
     const grossSalary = await calculateGrossSalary(
-      basicSalaryId,
+      basicSalary.id,
       houseAllowance,
       medicalAllowance,
       otherAllowance,
@@ -41,7 +56,7 @@ exports.createSalaryStructure = catchAsync(async (req, res, next) => {
     const newSalaryStructure = await prisma.salaryStructure.create({
       data: {
         employeeId,
-        basicSalaryId,
+        basicSalaryId:basicSalary.id,
         houseAllowance,
         medicalAllowance,
         otherAllowance,

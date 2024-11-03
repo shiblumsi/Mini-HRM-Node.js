@@ -4,14 +4,18 @@ const AppError = require('../utils/appError');
 const { sendEmail } = require('../utils/sendMail');
 
 exports.applyLeave = catchAsync(async (req, res, next) => {
-  const { employeeId, leaveTypeId, startDate, endDate } = req.body;
+  const { leaveTypeId, startDate, endDate } = req.body;
 
-  // Validate input
-  if (!employeeId || !leaveTypeId || !startDate || !endDate) {
+  const employee = await prisma.employee.findUnique({
+    where: { userId: req.user.id },
+  });
+  const employeeId = employee.id;
+  console.log(employeeId);
+
+  if (!leaveTypeId || !startDate || !endDate) {
     return next(new AppError('All fields are required', 400));
   }
 
-  // Convert startDate and endDate strings to Date objects
   const start = new Date(startDate);
   const end = new Date(endDate);
 
@@ -21,11 +25,9 @@ exports.applyLeave = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Calculate total days for the leave
   const totalDaysRequested =
     Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
-  // Get the leave type to check maxDays
   const leaveType = await prisma.leaveType.findUnique({
     where: { id: leaveTypeId },
   });
@@ -40,13 +42,12 @@ exports.applyLeave = catchAsync(async (req, res, next) => {
     },
   });
 
-  // Check if any pending leaves exist
   if (isPending.length > 0) {
     return next(
       new AppError('You already have a leave request in "PENDING" status', 400)
     );
   }
-  // Calculate total approved days taken by the employee for this leave type
+
   const approvedLeaves = await prisma.leave.findMany({
     where: {
       employeeId: Number(employeeId),
@@ -60,7 +61,6 @@ exports.applyLeave = catchAsync(async (req, res, next) => {
     totalDaysTaken += leave.totalDays;
   });
 
-  // Check if the requested leave exceeds the remaining balance
   const remainingDays = leaveType.maxDays - totalDaysTaken;
   if (totalDaysRequested > remainingDays) {
     return next(
@@ -71,13 +71,12 @@ exports.applyLeave = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Apply for the leave if validation passes
   const newLeave = await prisma.leave.create({
     data: {
       employeeId,
       leaveTypeId,
-      startDate: start, // Use the converted Date object
-      endDate: end, // Use the converted Date object
+      startDate: start,
+      endDate: end,
       totalDays: totalDaysRequested,
       status: 'PENDING',
     },
@@ -92,15 +91,14 @@ exports.applyLeave = catchAsync(async (req, res, next) => {
 // Approve a leave with email notification
 exports.approveLeave = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const { approvedBy } = req.body; // User who approved the leave
+  const { approvedBy } = req.body;
 
-  // Find the leave request
   const leave = await prisma.leave.findUnique({
     where: { id: Number(id) },
     include: {
       employee: {
         include: {
-          user: { select: { email: true } }, // Include the user's email
+          user: { select: { email: true } },
         },
       },
     },
@@ -110,12 +108,10 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
     return next(new AppError('Leave request not found', 404));
   }
 
-  // Check if the leave is already approved or rejected
   if (leave.status !== 'PENDING') {
     return next(new AppError('Leave request is already processed', 400));
   }
 
-  // Update leave status to 'APPROVED'
   const approvedLeave = await prisma.leave.update({
     where: { id: Number(id) },
     data: {
@@ -124,7 +120,7 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
       approvalDate: new Date(),
     },
   });
-  // Create alert
+
   await prisma.alert.create({
     data: {
       eventType: 'LEAVE_APPROVAL',
@@ -132,15 +128,13 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
       recipientId: leave.employeeId,
     },
   });
-  // Ensure the employee's user email exists
+
   const email = leave.employee.user.email;
-  console.log('kbsbldjfbkjdlsb', email);
 
   if (!email) {
     return next(new AppError('Employee email not found', 400));
   }
 
-  // Create an email notification in the database
   const notification = await prisma.notification.create({
     data: {
       type: 'EMAIL',
@@ -152,7 +146,7 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
 
   // Send the email notification
   await sendEmail({
-    to: email, // Employee's user email
+    to: email,
     subject: 'Leave Approval Notification',
     text: notification.message,
   });
@@ -168,7 +162,6 @@ exports.approveLeave = catchAsync(async (req, res, next) => {
 exports.rejectLeave = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
-  // Find the leave request
   const leave = await prisma.leave.findUnique({
     where: { id: Number(id) },
   });
@@ -177,12 +170,10 @@ exports.rejectLeave = catchAsync(async (req, res, next) => {
     return next(new AppError('Leave request not found', 404));
   }
 
-  // Check if the leave is already approved or rejected
   if (leave.status !== 'PENDING') {
     return next(new AppError('Leave request is already processed', 400));
   }
 
-  // Update leave status to 'REJECTED'
   const rejectedLeave = await prisma.leave.update({
     where: { id: Number(id) },
     data: {
@@ -207,14 +198,12 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
     return next(new AppError('Leave ID is required', 400));
   }
 
-  // Ensure status is provided and valid
   if (!status || !['APPROVED', 'REJECTED'].includes(status)) {
     return next(
       new AppError('Invalid status. Use "APPROVED" or "REJECTED".', 400)
     );
   }
 
-  // Find the leave request by ID
   const leave = await prisma.leave.findUnique({
     where: { id: Number(id) },
   });
@@ -223,14 +212,13 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
     return next(new AppError('Leave request not found', 404));
   }
 
-  // Prepare data for update based on status
   const updateData = { status, updatedAt: new Date() };
 
   if (status === 'APPROVED') {
     updateData.approvedBy = 'admin';
-    updateData.approvalDate = new Date(); // Approval date is set to now
+    updateData.approvalDate = new Date();
   } else if (status === 'REJECTED') {
-    updateData.cancellationDate = new Date(); // Rejection date is set to now
+    updateData.cancellationDate = new Date();
   }
 
   // Update the leave request
@@ -251,16 +239,14 @@ exports.getLeaveHistory = catchAsync(async (req, res, next) => {
   const { employeeId } = req.params;
   console.log(employeeId);
 
-  // Validate employee ID
   if (!employeeId) {
     return next(new AppError('Employee ID is required', 400));
   }
 
-  // Retrieve leave history for the specified employee
   const leaveHistory = await prisma.leave.findMany({
     where: { employeeId: Number(employeeId) },
-    include: { type: true }, // Include leave type details
-    orderBy: { createdAt: 'desc' }, // Optional: order by creation date
+    include: { type: true },
+    orderBy: { createdAt: 'desc' },
   });
 
   res.status(200).json({
@@ -272,49 +258,58 @@ exports.getLeaveHistory = catchAsync(async (req, res, next) => {
 exports.getLeaveBalance = catchAsync(async (req, res, next) => {
   const { employeeId } = req.params;
 
-  // Validate employee ID
+  const employee = await prisma.employee.findUnique({
+    where: { id: Number(employeeId) },
+    select: {
+      firstName: true,
+      user: {
+        select: {
+          email: true,
+        },
+      },
+      department: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+
   if (!employeeId) {
     return next(new AppError('Employee ID is required', 400));
   }
 
-  // Retrieve all leave types
   const leaveTypes = await prisma.leaveType.findMany();
 
-  // Initialize leave balance object
   const leaveBalance = {};
 
-  // Loop through each leave type to calculate balance
   for (const leaveType of leaveTypes) {
-    // Get all approved leaves for this employee and leave type
     const approvedLeaves = await prisma.leave.findMany({
       where: {
         employeeId: Number(employeeId),
         leaveTypeId: leaveType.id,
-        status: 'APPROVED', // Count only approved leaves
+        status: 'APPROVED',
       },
     });
 
-    // Initialize totalDaysTaken to 0
     let totalDaysTaken = 0;
 
-    // Loop through each leave and add up totalDays
     for (const leave of approvedLeaves) {
       totalDaysTaken += leave.totalDays;
     }
 
-    // Calculate remaining days (can be negative if more leave taken than allowed)
     const remaining = leaveType.maxDays - totalDaysTaken;
 
-    // Update the leave balance, allowing negative remaining days
     leaveBalance[leaveType.name] = {
       maxDays: leaveType.maxDays,
       taken: totalDaysTaken,
-      remaining: remaining, // This can be negative
+      remaining: remaining,
     };
   }
 
   res.status(200).json({
     status: 'success',
+    employee: employee,
     data: leaveBalance,
   });
 });
@@ -322,7 +317,6 @@ exports.getLeaveBalance = catchAsync(async (req, res, next) => {
 // Generate leave reports
 exports.generateLeaveReport = catchAsync(async (req, res, next) => {
   try {
-    // Fetch leave counts based on their status
     const leaveReports = await prisma.leave.groupBy({
       by: ['status'],
       _count: {
@@ -330,18 +324,16 @@ exports.generateLeaveReport = catchAsync(async (req, res, next) => {
       },
     });
 
-    // Optional: Fetch leave balances for each employee (if needed)
     const leaveBalances = await prisma.leaveType.findMany({
       include: {
         leaves: {
           where: {
-            status: 'APPROVED', // Or any specific status you want
+            status: 'APPROVED',
           },
         },
       },
     });
 
-    // Structure the report data
     const reportData = leaveReports.map((report) => ({
       status: report.status,
       count: report._count.id,
@@ -351,7 +343,7 @@ exports.generateLeaveReport = catchAsync(async (req, res, next) => {
       status: 'success',
       data: {
         report: reportData,
-        leaveBalances, // Include leave balances if needed
+        leaveBalances,
       },
     });
   } catch (error) {
@@ -361,37 +353,33 @@ exports.generateLeaveReport = catchAsync(async (req, res, next) => {
 
 // Generate leave reports by employee ID
 exports.generateLeaveReportByEmpId = catchAsync(async (req, res, next) => {
-  const { employeeId } = req.params; // Get employeeId from request parameters
+  const { employeeId } = req.params;
 
   try {
-    // Fetch leave counts based on their status for a specific employee
     const leaveReports = await prisma.leave.groupBy({
-      where: { employeeId: Number(employeeId) }, // Filter by employeeId
+      where: { employeeId: Number(employeeId) },
       by: ['status'],
       _count: {
         id: true,
       },
     });
 
-    // Fetch leave balances for the specific employee
     const leaveBalances = await prisma.leaveType.findMany({
       include: {
         leaves: {
           where: {
-            employeeId: Number(employeeId), // Filter by employeeId
-            status: 'APPROVED', // Or any specific status you want
+            employeeId: Number(employeeId),
+            status: 'APPROVED',
           },
         },
       },
     });
 
-    // Structure the report data
     const reportData = leaveReports.map((report) => ({
       status: report.status,
       count: report._count.id,
     }));
 
-    // Calculate balances for each leave type
     const balanceData = leaveBalances.map((leaveType) => {
       const totalTaken = leaveType.leaves.reduce(
         (sum, leave) => sum + leave.totalDays,
@@ -410,7 +398,7 @@ exports.generateLeaveReportByEmpId = catchAsync(async (req, res, next) => {
       employeeId,
       data: {
         report: reportData,
-        leaveBalances: balanceData, // Include leave balances
+        leaveBalances: balanceData,
       },
     });
   } catch (error) {

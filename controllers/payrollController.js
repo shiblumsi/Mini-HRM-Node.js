@@ -11,7 +11,7 @@ exports.generatePayroll = catchAsync(async (req, res, next) => {
     const salaryStructure = await prisma.salaryStructure.findFirst({
       where: {
         employeeId: Number(employeeId),
-        month: Number(month),
+        month,
         year: Number(year),
       },
     });
@@ -66,13 +66,13 @@ exports.generatePayroll = catchAsync(async (req, res, next) => {
       message: emailMessage,
     });
 
-    // Create an email notification in the database
+ 
     await prisma.notification.create({
       data: {
         type: 'EMAIL',
         recipientId: employeeId,
         message: emailMessage,
-        status: 'SENT', // Update status based on your logic
+        status: 'SENT', 
       },
     });
 

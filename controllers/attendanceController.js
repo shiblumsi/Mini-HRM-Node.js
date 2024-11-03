@@ -5,32 +5,37 @@ const moment = require('moment');
 
 // // Get Attendance by ID
 exports.getAttendanceById = catchAsync(async (req, res, next) => {
-  const { attId } = req.params;
-
-  console.log('Attendance ID:', attId);
+  const { id } = req.params;
+  console.log("hfsbkjfdk");
+  
 
   try {
-      const attendance = await prisma.attendance.findUnique({
-          where: { id: Number(attId) },
-      });
+    const attendance = await prisma.attendance.findUnique({
+      where: { id: Number(id) },
+    });
 
-      if (!attendance) {
-          return next(new AppError('No attendance record found with that ID.', 404));
-      }
+    if (!attendance) {
+      return next(
+        new AppError('No attendance record found with that ID.', 404)
+      );
+    }
 
-      // Format and respond with the attendance record
-      const formattedAttendance = {
-          ...attendance,
-          checkIn: attendance.checkIn ? moment(attendance.checkIn).format('hh:mm A') : null,
-          checkOut: attendance.checkOut ? moment(attendance.checkOut).format('hh:mm A') : null,
-      };
+    const formattedAttendance = {
+      ...attendance,
+      checkIn: attendance.checkIn
+        ? moment(attendance.checkIn).format('hh:mm A')
+        : null,
+      checkOut: attendance.checkOut
+        ? moment(attendance.checkOut).format('hh:mm A')
+        : null,
+    };
 
-      res.status(200).json({
-          status: 'success',
-          data: formattedAttendance,
-      });
+    res.status(200).json({
+      status: 'success',
+      data: formattedAttendance,
+    });
   } catch (error) {
-      return next(new AppError('Database query failed.', 500));
+    return next(new AppError('Database query failed.', 500));
   }
 });
 
@@ -48,13 +53,13 @@ exports.recordAttendance = catchAsync(async (req, res, next) => {
   }
 
   const currentDate = moment();
-  const attendanceDay = attendanceDate || currentDate.format('DD'); 
-  const attendanceMonth = month || currentDate.format('MMM'); 
-  const attendanceYear = year || currentDate.year(); 
+  const attendanceDay = attendanceDate || currentDate.format('DD');
+  const attendanceMonth = month || currentDate.format('MMM');
+  const attendanceYear = year || currentDate.year();
 
   const fullDate = `${attendanceYear}-${currentDate.format(
     'MM'
-  )}-${attendanceDay}`; // Create full date in YYYY-MM-DD format
+  )}-${attendanceDay}`;
 
   // Parse check-in time and check-out time
   const checkInTime = moment(`${fullDate} ${checkIn}`, 'YYYY-MM-DD hh:mm A');
@@ -93,7 +98,6 @@ exports.recordAttendance = catchAsync(async (req, res, next) => {
     const fullHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
 
-    // Calculate work hours in decimal form, with a custom rounding
     if (remainingMinutes === 0) {
       workHours = fullHours;
     } else if (remainingMinutes < 10) {
@@ -104,20 +108,17 @@ exports.recordAttendance = catchAsync(async (req, res, next) => {
 
     workHours = parseFloat(workHours.toFixed(2));
 
-    // Calculate overtime if work hours exceed 8
     if (workHours > 8) {
       overtime = parseFloat((workHours - 8).toFixed(2)); // Overtime hours
     }
   }
 
-  // check lateArrival is true or false
   let lateArrival = false;
   const officeStartTime = moment(`${fullDate} 10:00 AM`, 'YYYY-MM-DD hh:mm A');
   if (checkInTime.isAfter(officeStartTime)) {
     lateArrival = true;
   }
 
-  // Check if attendance data already exists
   const isExistAttendanceData = await prisma.attendance.findUnique({
     where: {
       employeeId_month_year_attendanceDate: {
@@ -137,7 +138,7 @@ exports.recordAttendance = catchAsync(async (req, res, next) => {
       )
     );
   }
-  // Create the attendance record
+
   const attendance = await prisma.attendance.create({
     data: {
       employeeId: Number(employeeId),
@@ -169,7 +170,6 @@ exports.updateCheckOut = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   let { checkOut } = req.body;
 
-  // Find the attendance record by ID
   const attendanceRecord = await prisma.attendance.findUnique({
     where: {
       id: Number(id),
@@ -180,7 +180,6 @@ exports.updateCheckOut = catchAsync(async (req, res, next) => {
     return next(new AppError('No attendance record found with that ID.', 404));
   }
 
-  // Check if check-in exists in the record, and if not, respond with an error
   if (!attendanceRecord.checkIn) {
     return next(
       new AppError('Check-in time is required to update the record.', 400)
@@ -190,9 +189,8 @@ exports.updateCheckOut = catchAsync(async (req, res, next) => {
   const currentDate = moment();
   const fullDate = `${attendanceRecord.year}-${currentDate.format('MM')}-${
     attendanceRecord.attendanceDate
-  }`; // Create full date
+  }`;
 
-  // Parse check-out time only if provided
   let checkOutTime = null;
   if (checkOut) {
     checkOutTime = moment(`${fullDate} ${checkOut}`, 'YYYY-MM-DD hh:mm A');
@@ -219,7 +217,7 @@ exports.updateCheckOut = catchAsync(async (req, res, next) => {
     const remainingMinutes = totalMinutes % 60;
     let overtime = 0;
     let workHours = 0;
-    // Calculate work hours in decimal form, with a custom rounding
+
     if (remainingMinutes === 0) {
       workHours = fullHours;
     } else if (remainingMinutes < 10) {
@@ -235,7 +233,6 @@ exports.updateCheckOut = catchAsync(async (req, res, next) => {
       overtime = parseFloat((workHours - 8).toFixed(2)); // Overtime hours
     }
 
-    // Update the attendance record
     const updatedRecord = await prisma.attendance.update({
       where: { id: Number(id) },
       data: {
@@ -246,7 +243,6 @@ exports.updateCheckOut = catchAsync(async (req, res, next) => {
       },
     });
 
-    // Respond with the updated attendance record
     res.status(200).json({
       status: 'success',
       data: {
@@ -272,67 +268,59 @@ exports.getAttendanceByDate = catchAsync(async (req, res, next) => {
   const { employeeId, attendanceDate, month, year, startDate, endDate } =
     req.query;
 
-  // Initialize filters object
   const filters = {};
 
-  // Filter by employee ID if provided
   if (employeeId) {
-    filters.employeeId = Number(employeeId); // Convert to number
+    filters.employeeId = Number(employeeId);
   }
 
-  // Auto-generate month and year if not provided
   const currentDate = moment();
-  const attendanceMonth = month || currentDate.format('MMM'); // Use current month if not provided
-  const attendanceYear = year || currentDate.year(); // Use current year if not provided
+  const attendanceMonth = month || currentDate.format('MMM');
+  const attendanceYear = year || currentDate.year();
 
   filters.month = attendanceMonth;
-  filters.year = Number(attendanceYear); // Convert to number for the year filter
+  filters.year = Number(attendanceYear);
 
-  // Filter by attendance date if provided
   if (attendanceDate) {
-    filters.attendanceDate = attendanceDate; // Filter by specific attendance date
+    filters.attendanceDate = attendanceDate;
   }
 
-  // Handle date range filtering for `checkIn` field (startDate and endDate)
   if (startDate || endDate) {
-    filters.checkIn = {}; // Initialize the `checkIn` field for filtering
+    filters.checkIn = {};
 
     if (startDate) {
-      filters.checkIn.gte = new Date(startDate); // Greater than or equal to startDate
+      filters.checkIn.gte = new Date(startDate);
     }
 
     if (endDate) {
-      filters.checkIn.lte = new Date(endDate); // Less than or equal to endDate
+      filters.checkIn.lte = new Date(endDate);
     }
   }
 
-  // Retrieve attendance records with the applied filters
   const attendanceRecords = await prisma.attendance.findMany({
     where: filters,
     orderBy: {
-      checkIn: 'desc', // Sort by check-in date in descending order
+      checkIn: 'desc',
     },
   });
 
-  // Return the response with formatted attendance records
   res.status(200).json({
     status: 'success',
     results: attendanceRecords.length,
     data: attendanceRecords.map((record) => ({
       ...record,
-      checkIn: moment(record.checkIn).format('hh:mm A'), // Format checkIn time
+      checkIn: moment(record.checkIn).format('hh:mm A'),
       checkOut: record.checkOut
         ? moment(record.checkOut).format('hh:mm A')
-        : null, // Format checkOut time
+        : null,
     })),
   });
 });
 
 // Generate monthly attendance report for an employee
 exports.generateMonthlyAttendanceReport = catchAsync(async (req, res, next) => {
-  const { employeeId, month, year } = req.body;
+  const { employeeId, month, year } = req.query;
 
-  // Fetch attendance records for the specified employee for the given month and year
   const attendanceRecords = await prisma.attendance.findMany({
     where: {
       employeeId: Number(employeeId),
@@ -350,29 +338,34 @@ exports.generateMonthlyAttendanceReport = catchAsync(async (req, res, next) => {
     );
   }
 
+  const offDays = await prisma.holiday.findMany({
+    where: {
+      month,
+      year: Number(year),
+    },
+  });
+
   // Initialize report data
-  let totalWorkingDays = attendanceRecords.length;
+  let totalWorkingDays = attendanceRecords.length - offDays.length;
   let daysPresent = 0;
   let daysAbsent = 0;
-  let leaveDays = 0; // This assumes you have a way to track leave days separately
+  let leaveDays = 0;
   let lateArrivals = 0;
   let earlyDepartures = 0;
   let totalWorkHours = 0;
   let totalOvertime = 0;
 
-  // Process attendance records
   attendanceRecords.forEach((record) => {
     if (record.checkOut) {
       daysPresent++;
-      totalWorkHours += record.workHoure || 0; // Accumulate work hours
-      totalOvertime += record.overtime || 0; // Accumulate overtime hours
+      totalWorkHours += record.workHoure || 0;
+      totalOvertime += record.overtime || 0;
 
-      // Check if the employee arrived late or left early
       if (record.lateArrival) {
         lateArrivals++;
       }
-      // Assuming a predefined early departure time
-      const officeEndTime = moment('06:00 PM', 'hh:mm A'); // Change this based on your office policy
+
+      const officeEndTime = moment('06:00 PM', 'hh:mm A');
       const checkOutTime = moment(record.checkOut);
 
       if (checkOutTime.isBefore(officeEndTime)) {
@@ -382,8 +375,42 @@ exports.generateMonthlyAttendanceReport = catchAsync(async (req, res, next) => {
       daysAbsent++;
     }
   });
+  daysAbsent = daysAbsent - offDays.length;
 
-  // Calculate averages
+  // Fetch approved leaves for the employee in the specified month and year
+  const approvedLeaves = await prisma.leave.findMany({
+    where: {
+      employeeId: Number(employeeId),
+      status: 'APPROVED',
+      startDate: {
+        lte: new Date(`${year}-${month}-31`),
+      },
+      endDate: {
+        gte: new Date(`${year}-${month}-01`),
+      },
+    },
+  });
+
+  // Calculate leave days within the month
+  approvedLeaves.forEach((leave) => {
+    // Calculate the start and end of the leave within the specified month
+    const start = new Date(
+      Math.max(
+        new Date(`${year}-${month}-01`).getTime(),
+        leave.startDate.getTime()
+      )
+    );
+    const end = new Date(
+      Math.min(
+        new Date(`${year}-${month}-31`).getTime(),
+        leave.endDate.getTime()
+      )
+    );
+
+    // Calculate the number of days within the month
+    leaveDays += Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  });
+
   const averageWorkHours =
     daysPresent > 0 ? (totalWorkHours / daysPresent).toFixed(2) : 0;
 
@@ -402,16 +429,14 @@ exports.generateMonthlyAttendanceReport = catchAsync(async (req, res, next) => {
     overtimeHours: totalOvertime,
   };
 
-  // Create the report in the database
   const attReport = await prisma.monthlyAttendanceReport.create({
     data: reportData,
   });
 
-  // Respond with the generated report
   res.status(200).json({
     status: 'success',
     data: {
-      report: attReport, // Return the created report
+      report: attReport,
     },
   });
 });
@@ -422,41 +447,37 @@ exports.overtimeAndLateAraivals = catchAsync(async (req, res, next) => {
   // Initialize filters
   const filters = {};
   if (employeeId) {
-    filters.employeeId = Number(employeeId); // Convert to number
+    filters.employeeId = Number(employeeId);
   }
 
-  // Handle month and year filtering
   if (month) {
-    filters.month = month; // Filter by month
+    filters.month = month;
   }
 
   if (year) {
-    filters.year = Number(year); // Convert to number
+    filters.year = Number(year);
   }
 
-  // Handle date range filtering based on checkIn
   if (startDate || endDate) {
     const dateFilters = {};
     if (startDate) {
       dateFilters.checkIn = {
-        gte: new Date(startDate), // Greater than or equal to startDate
+        gte: new Date(startDate),
       };
     }
 
     if (endDate) {
       dateFilters.checkIn = {
         ...dateFilters.checkIn,
-        lte: new Date(endDate), // Less than or equal to endDate
+        lte: new Date(endDate),
       };
     }
 
-    // Combine date filters with existing filters
     filters.checkIn = {
       ...dateFilters.checkIn,
     };
   }
 
-  // Retrieve attendance records based on the filters
   const attendanceRecords = await prisma.attendance.findMany({
     where: filters,
   });
@@ -470,27 +491,23 @@ exports.overtimeAndLateAraivals = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Initialize counters
   let totalOvertime = 0;
   let lateArrivals = 0;
 
-  // Process attendance records
   attendanceRecords.forEach((record) => {
     if (record.overtime) {
-      totalOvertime += record.overtime; // Sum up overtime hours
+      totalOvertime += record.overtime;
     }
     if (record.lateArrival) {
-      lateArrivals++; // Count late arrivals
+      lateArrivals++;
     }
   });
 
-  // Respond with the overtime and late arrivals data
   res.status(200).json({
     status: 'success',
     data: {
       totalOvertime: parseFloat(totalOvertime).toFixed(2),
       lateArrivals,
-      //attendanceRecords, // Optionally return the raw records
     },
   });
 });
@@ -523,13 +540,15 @@ exports.deleteAttendance = catchAsync(async (req, res, next) => {
 
 // Get Employee Attendance Summary
 exports.getEmployeeAttendanceSummary = catchAsync(async (req, res, next) => {
-  const { employeeId, month, year } = req.query; // Employee ID, month, and year as query parameters
+  console.log('hgjkhgjhghjfgjhfg');
+
+  const { employeeId, month, year } = req.query;
+  console.log(req.query);
 
   if (!employeeId) {
     return next(new AppError('Employee ID is required.', 400));
   }
 
-  // Find the employee by ID
   const employee = await prisma.employee.findUnique({
     where: { id: Number(employeeId) },
   });
@@ -538,10 +557,9 @@ exports.getEmployeeAttendanceSummary = catchAsync(async (req, res, next) => {
     return next(new AppError('Employee not found', 404));
   }
 
-  const attendanceYear = year ? Number(year) : moment().year(); // Default to current year if not provided
-  const attendanceMonth = month ? month : moment().format('MMM'); // Default to current month if not provided
+  const attendanceYear = year ? Number(year) : moment().year();
+  const attendanceMonth = month ? month : moment().format('MMM');
 
-  // Fetch attendance records for the employee for the specified month and year
   const attendanceRecords = await prisma.attendance.findMany({
     where: {
       employeeId: Number(employeeId),
@@ -551,10 +569,14 @@ exports.getEmployeeAttendanceSummary = catchAsync(async (req, res, next) => {
   });
 
   if (!attendanceRecords.length) {
-    return next(new AppError('No attendance records found for the specified month and year.', 404));
+    return next(
+      new AppError(
+        'No attendance records found for the specified month and year.',
+        404
+      )
+    );
   }
 
-  // Calculate total work hours, overtime, and late arrivals
   let totalWorkHours = 0;
   let totalOvertime = 0;
   let lateArrivals = 0;
@@ -569,7 +591,6 @@ exports.getEmployeeAttendanceSummary = catchAsync(async (req, res, next) => {
 
   const totalDays = attendanceRecords.length;
 
-  // Respond with the attendance summary
   res.status(200).json({
     status: 'success',
     data: {
@@ -577,7 +598,7 @@ exports.getEmployeeAttendanceSummary = catchAsync(async (req, res, next) => {
       month: attendanceMonth,
       year: attendanceYear,
       totalDays,
-      totalWorkHours: parseFloat(totalWorkHours.toFixed(2)), // Round to 2 decimal places
+      totalWorkHours: parseFloat(totalWorkHours.toFixed(2)),
       totalOvertime: parseFloat(totalOvertime.toFixed(2)),
       lateArrivals,
     },

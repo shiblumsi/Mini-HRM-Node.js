@@ -1,6 +1,10 @@
 const express = require('express');
 const taskController = require('../../controllers/task&performance/taskController');
+const { adminAndHrOnly } = require('../../middlewares/permissionMiddlewar');
+
 const router = express.Router();
+
+router.use(adminAndHrOnly);
 
 router.post('/', taskController.createTask);
 router.get('/get-all', taskController.getAllTasks);

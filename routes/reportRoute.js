@@ -16,9 +16,11 @@ const {
   generatePerformanceReport,
 } = require('../controllers/reportController');
 
+const { adminAndHrOnly } = require('../middlewares/permissionMiddlewar');
 
 const router = express.Router();
 
+router.use(adminAndHrOnly);
 
 // Attendance Reports
 router.post('/generate/attendance', generateAttendanceReport);
@@ -37,7 +39,7 @@ router.get('/leave', getLeaveReports);
 router.get('/leave/:employeeId', getLeaveReportByEmployeeId);
 
 // Performance Reports
-router.post('/generate/performance', generatePerformanceReport); 
+router.post('/generate/performance', generatePerformanceReport);
 router.get('/performance', getPerformanceReports);
 router.get('/performance/:employeeId', getPerformanceReportByEmployeeId);
 
@@ -46,9 +48,5 @@ router.get('/dashboard', getDashboardOverview);
 
 // Custom Report
 // router.post('/custom', createCustomReport);
-
-
-
-
 
 module.exports = router;

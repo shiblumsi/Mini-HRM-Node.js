@@ -11,10 +11,12 @@ const YAML = require('yamljs');
 const swaggerDocument = YAML.load(path.join(__dirname, 'docs/api.yaml'));
 //routes
 const departmentRoute = require('./routes/departmentRoute');
+const adminAuthRoute = require('./routes/admin/adminAuthRoute');
 const designationRoute = require('./routes/designationRoute');
 const userProfileRoute = require('./routes/userProfileRoute');
 const attendanceRoute = require('./routes/attendanceRoute');
 const employeeRoute = require('./routes/employeeRoute');
+const employeeSelfRoute = require('./routes/employeeSelfRoute');
 const leaveTypeRoute = require('./routes/leaveTypeRoute');
 const basicSalaryRoute = require('./routes/basicSalaryRoute');
 const payrollRoute = require('./routes/payrollRoute');
@@ -61,9 +63,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/department', departmentRoute);
 app.use('/api/designation', designationRoute);
 app.use('/api/role', roleRoute);
+app.use('/api/admin', adminAuthRoute);
 app.use('/api/user/', userRoute);
 app.use('/api/auth/', authRoute);
-app.use('/api/user/profile', userProfileRoute);
+app.use('/api/user-profile', userProfileRoute);
 app.use('/api/employee', employeeRoute);
 app.use('/api/attendance', attendanceRoute);
 app.use('/api/leave-types', leaveTypeRoute);
@@ -82,6 +85,7 @@ app.use('/api/report', reportRoute);
 app.use('/api/notification', notificationRoute);
 app.use('/api/settings', companySettingsRoute);
 app.use('/api/holiday', holidayRoute);
+app.use('/api/self', employeeSelfRoute);
 
 //Path Not Found Middleware
 app.all('*', (req, res, next) => {

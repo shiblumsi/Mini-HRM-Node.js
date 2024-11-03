@@ -1,8 +1,10 @@
 const express = require('express');
 const designationController = require('../controllers/designationController');
-
+const {adminOnly} = require("../middlewares/permissionMiddlewar")
 const router = express.Router();
 
+
+router.use(adminOnly)
 router
   .route('/')
   .post(designationController.createDesignation)

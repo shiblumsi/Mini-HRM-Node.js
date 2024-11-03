@@ -27,27 +27,23 @@ exports.createPayrollTransaction = catchAsync(async (req, res, next) => {
   const { payrollId, paymentMethod, transactionStatus } = req.body;
 
   try {
-    // Automatically generate the transaction date as the current date
     const transactionDate = new Date();
 
-    // Fetch the associated payroll to get the amount
     const payroll = await prisma.payroll.findUnique({
       where: {
         id: Number(payrollId),
       },
     });
 
-    // Check if the payroll exists
     if (!payroll) {
       return next(new AppError('Payroll record not found.', 404));
     }
 
-    // Create the payroll transaction
     const transaction = await prisma.payrollTransaction.create({
       data: {
         payrollId: Number(payrollId),
-        transactionDate: transactionDate, // Use the current date
-        amount: payroll.totalPayable, // Use the total payable amount from the payroll
+        transactionDate: transactionDate,
+        amount: payroll.totalPayable,
         paymentMethod,
         transactionStatus,
       },
@@ -75,7 +71,7 @@ exports.updatePayrollTransaction = catchAsync(async (req, res, next) => {
       where: { id: Number(id) },
       data: {
         paymentMethod,
-        transactionStatus
+        transactionStatus,
       },
     });
 

@@ -2,28 +2,26 @@ const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
 const { prisma } = require('../../DB/db.config');
 
-// Create an onboarding record for an employee
+// Create an onboarding record
 exports.createOnboarding = catchAsync(async (req, res, next) => {
-  const { employeeId, jobApplicationId, designationId } = req.body;
+  const { departmentId, jobApplicationId, designationId } = req.body;
 
   // Validate required fields
-  if (!employeeId || !jobApplicationId || !designationId) {
-    return next(new AppError('Employee ID, Job Application ID, and Designation ID are required', 400));
+  if (!departmentId || !jobApplicationId || !designationId) {
+    return next(new AppError('Department ID, Job Application ID, and Designation ID are required', 400));
   }
 
   const newOnboarding = await prisma.onboarding.create({
     data: {
-      employeeId: Number(employeeId),
       jobApplicationId: Number(jobApplicationId),
+      departmentId: Number(departmentId),
       designationId: Number(designationId),
     },
   });
 
   res.status(201).json({
     status: 'success',
-    data: {
-      onboarding: newOnboarding,
-    },
+    data: { onboarding: newOnboarding },
   });
 });
 
@@ -31,7 +29,7 @@ exports.createOnboarding = catchAsync(async (req, res, next) => {
 exports.getAllOnboardings = catchAsync(async (req, res, next) => {
   const onboardings = await prisma.onboarding.findMany({
     include: {
-      employee: true,
+      department: true,
       jobApplication: true,
       designation: true,
     },
@@ -44,9 +42,7 @@ exports.getAllOnboardings = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: onboardings.length,
-    data: {
-      onboardings,
-    },
+    data: { onboardings },
   });
 });
 
@@ -57,7 +53,7 @@ exports.getOnboardingById = catchAsync(async (req, res, next) => {
   const onboarding = await prisma.onboarding.findUnique({
     where: { id: Number(id) },
     include: {
-      employee: true,
+      department: true,
       jobApplication: true,
       designation: true,
     },
@@ -69,9 +65,7 @@ exports.getOnboardingById = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      onboarding,
-    },
+    data: { onboarding },
   });
 });
 
@@ -99,9 +93,7 @@ exports.updateOnboarding = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      onboarding: updatedOnboarding,
-    },
+    data: { onboarding: updatedOnboarding },
   });
 });
 
